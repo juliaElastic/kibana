@@ -6,7 +6,7 @@
  */
 
 require('../../../../../src/setup_node_env');
-require('./create_agents').run();
+require('./ds').run();
 
 /*
 Usage:
