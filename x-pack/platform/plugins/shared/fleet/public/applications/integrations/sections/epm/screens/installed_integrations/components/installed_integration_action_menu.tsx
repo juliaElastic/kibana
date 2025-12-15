@@ -18,14 +18,13 @@ import { FormattedMessage } from '@kbn/i18n-react';
 import type { InstalledPackageUIPackageListItem } from '../types';
 import { useInstalledIntegrationsActions } from '../hooks/use_installed_integrations_actions';
 import { ExperimentalFeaturesService } from '../../../../../services';
-import { useLicense } from '../../../../../hooks';
+import { useRollbackAvailablePackages } from '../hooks/use_rollback_available';
 
 export const InstalledIntegrationsActionMenu: React.FunctionComponent<{
   selectedItems: InstalledPackageUIPackageListItem[];
 }> = ({ selectedItems }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { enablePackageRollback } = ExperimentalFeaturesService.get();
-  const licenseService = useLicense();
   const button = (
     <EuiButton
       iconType="arrowDown"
@@ -63,6 +62,9 @@ export const InstalledIntegrationsActionMenu: React.FunctionComponent<{
     return bulkRollbackIntegrationsWithConfirmModal(selectedItems);
   }, [selectedItems, bulkRollbackIntegrationsWithConfirmModal]);
 
+  const isRollbackAvailablePackages: Record<string, boolean> =
+    useRollbackAvailablePackages(selectedItems);
+
   const items = useMemo(() => {
     const hasUpgreadableIntegrations = selectedItems.some(
       (item) =>
@@ -76,8 +78,7 @@ export const InstalledIntegrationsActionMenu: React.FunctionComponent<{
     );
 
     const hasRollbackableIntegrations = selectedItems.some(
-      (item) =>
-        !!item.installationInfo?.previous_version && !item.installationInfo?.is_rollback_ttl_expired
+      (item) => isRollbackAvailablePackages[item.name]
     );
 
     return [
@@ -136,7 +137,7 @@ export const InstalledIntegrationsActionMenu: React.FunctionComponent<{
             <EuiContextMenuItem
               key="rollback"
               icon="returnKey"
-              disabled={!hasRollbackableIntegrations || !licenseService.isEnterprise()}
+              disabled={!hasRollbackableIntegrations}
               onClick={openRollbackModal}
             >
               <FormattedMessage
@@ -158,7 +159,7 @@ export const InstalledIntegrationsActionMenu: React.FunctionComponent<{
     openUpgradeModal,
     openRollbackModal,
     enablePackageRollback,
-    licenseService,
+    isRollbackAvailablePackages,
   ]);
 
   return (
