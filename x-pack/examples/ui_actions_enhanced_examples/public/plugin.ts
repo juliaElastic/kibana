@@ -6,41 +6,44 @@
  */
 
 import { createElement as h } from 'react';
-import { toMountPoint } from '../../../../src/plugins/kibana_react/public';
-import { Plugin, CoreSetup, CoreStart, AppNavLinkStatus } from '../../../../src/core/public';
-import { DataPublicPluginSetup, DataPublicPluginStart } from '../../../../src/plugins/data/public';
-import {
+import { toMountPoint } from '@kbn/react-kibana-mount';
+import type { Plugin, CoreSetup, CoreStart } from '@kbn/core/public';
+import type { DataPublicPluginSetup, DataPublicPluginStart } from '@kbn/data-plugin/public';
+import type {
   AdvancedUiActionsSetup,
   AdvancedUiActionsStart,
-} from '../../../../x-pack/plugins/ui_actions_enhanced/public';
+} from '@kbn/ui-actions-enhanced-plugin/public';
+import { createStartServicesGetter } from '@kbn/kibana-utils-plugin/public';
+import type { DiscoverSetup, DiscoverStart } from '@kbn/discover-plugin/public';
+import type { DeveloperExamplesSetup } from '@kbn/developer-examples-plugin/public';
+import {
+  UiActionsEnhancedMemoryActionStorage,
+  UiActionsEnhancedDynamicActionManager,
+} from '@kbn/ui-actions-enhanced-plugin/public';
+import type { EmbeddableSetup } from '@kbn/embeddable-plugin/public';
+import type { SharePluginStart } from '@kbn/share-plugin/public';
+import type { DashboardStart } from '@kbn/dashboard-plugin/public';
 import { DashboardHelloWorldDrilldown } from './drilldowns/dashboard_hello_world_drilldown';
 import { DashboardToDiscoverDrilldown } from './drilldowns/dashboard_to_discover_drilldown';
 import { App1ToDashboardDrilldown } from './drilldowns/app1_to_dashboard_drilldown';
 import { App1HelloWorldDrilldown } from './drilldowns/app1_hello_world_drilldown';
-import { createStartServicesGetter } from '../../../../src/plugins/kibana_utils/public';
-import { DiscoverSetup, DiscoverStart } from '../../../../src/plugins/discover/public';
-import { DashboardSetup, DashboardStart } from '../../../../src/plugins/dashboard/public';
 import { DashboardHelloWorldOnlyRangeSelectDrilldown } from './drilldowns/dashboard_hello_world_only_range_select_drilldown';
-import { DeveloperExamplesSetup } from '../../../../examples/developer_examples/public';
+import type { SampleApp2ClickContext } from './triggers';
 import {
   sampleApp1ClickTrigger,
   sampleApp2ClickTrigger,
   SAMPLE_APP2_CLICK_TRIGGER,
-  SampleApp2ClickContext,
   sampleApp2ClickContext,
 } from './triggers';
 import { mount } from './mount';
-import {
-  UiActionsEnhancedMemoryActionStorage,
-  UiActionsEnhancedDynamicActionManager,
-} from '../../../plugins/ui_actions_enhanced/public';
 import { App2ToDashboardDrilldown } from './drilldowns/app2_to_dashboard_drilldown';
+import { registerButtonEmbeddable } from './embeddables/register_button_embeddable';
 
 export interface SetupDependencies {
-  dashboard: DashboardSetup;
   data: DataPublicPluginSetup;
   developerExamples: DeveloperExamplesSetup;
   discover: DiscoverSetup;
+  embeddable: EmbeddableSetup;
   uiActionsEnhanced: AdvancedUiActionsSetup;
 }
 
@@ -48,6 +51,7 @@ export interface StartDependencies {
   dashboard: DashboardStart;
   data: DataPublicPluginStart;
   discover: DiscoverStart;
+  share: SharePluginStart;
   uiActionsEnhanced: AdvancedUiActionsStart;
 }
 
@@ -62,7 +66,7 @@ export class UiActionsEnhancedExamplesPlugin
 {
   public setup(
     core: CoreSetup<StartDependencies, UiActionsEnhancedExamplesStart>,
-    { uiActionsEnhanced: uiActions, developerExamples }: SetupDependencies
+    { embeddable, uiActionsEnhanced: uiActions, developerExamples }: SetupDependencies
   ) {
     const start = createStartServicesGetter(core.getStartServices);
 
@@ -93,7 +97,8 @@ export class UiActionsEnhancedExamplesPlugin
               dynamicActionManager: self.managerWithoutEmbeddableSingleButton,
               triggers: [SAMPLE_APP2_CLICK_TRIGGER],
               placeContext: {},
-            })
+            }),
+            coreStart.rendering
           ),
           {
             ownFocus: true,
@@ -118,7 +123,8 @@ export class UiActionsEnhancedExamplesPlugin
               dynamicActionManager: self.managerWithoutEmbeddableSingleButton,
               triggers: [SAMPLE_APP2_CLICK_TRIGGER],
               placeContext: { sampleApp2ClickContext },
-            })
+            }),
+            coreStart.rendering
           ),
           {
             ownFocus: true,
@@ -130,7 +136,7 @@ export class UiActionsEnhancedExamplesPlugin
     core.application.register({
       id: 'ui_actions_enhanced-explorer',
       title: 'UI Actions Enhanced Explorer',
-      navLinkStatus: AppNavLinkStatus.hidden,
+      visibleIn: [],
       mount: mount(core),
     });
 
@@ -148,9 +154,15 @@ export class UiActionsEnhancedExamplesPlugin
         },
       ],
     });
+
+    const startServicesPromise = core.getStartServices();
+    registerButtonEmbeddable(
+      embeddable,
+      startServicesPromise.then(([_, startDeps]) => startDeps)
+    );
   }
 
-  public start(core: CoreStart, plugins: StartDependencies): UiActionsEnhancedExamplesStart {
+  public start(_core: CoreStart, plugins: StartDependencies): UiActionsEnhancedExamplesStart {
     const managerWithoutEmbeddable = new UiActionsEnhancedDynamicActionManager({
       storage: new UiActionsEnhancedMemoryActionStorage(),
       isCompatible: async () => true,

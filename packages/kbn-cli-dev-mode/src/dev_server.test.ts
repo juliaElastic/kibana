@@ -1,9 +1,10 @@
 /*
  * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
 import { EventEmitter } from 'events';
@@ -12,10 +13,11 @@ import { PassThrough } from 'stream';
 import * as Rx from 'rxjs';
 
 import { extendedEnvSerializer } from './test_helpers';
-import { DevServer, Options } from './dev_server';
+import type { Options } from './dev_server';
+import { DevServer } from './dev_server';
 import { TestLog } from './log';
 
-jest.useFakeTimers('modern');
+jest.useFakeTimers();
 
 class MockProc extends EventEmitter {
   public readonly signalsSent: string[] = [];
@@ -72,6 +74,7 @@ const defaultOptions: Options = {
   processExit$,
   sigint$,
   sigterm$,
+  forceColor: true,
 };
 
 expect.addSnapshotSerializer(extendedEnvSerializer);
@@ -79,6 +82,7 @@ expect.addSnapshotSerializer(extendedEnvSerializer);
 beforeEach(() => {
   jest.clearAllMocks();
   log.messages.length = 0;
+  process.execArgv = ['--inheritted', '--exec', '--argv'];
   currentProc = undefined;
 });
 
@@ -120,9 +124,6 @@ describe('#run$', () => {
   it('starts the dev server with the right options', () => {
     run(new DevServer(defaultOptions)).unsubscribe();
 
-    // ensure that FORCE_COLOR is in the env for consistency in snapshot
-    process.env.FORCE_COLOR = process.env.FORCE_COLOR || 'true';
-
     expect(execa.node.mock.calls).toMatchInlineSnapshot(`
       Array [
         Array [
@@ -135,11 +136,13 @@ describe('#run$', () => {
             "env": Object {
               "<inheritted process.env>": true,
               "ELASTIC_APM_SERVICE_NAME": "kibana",
+              "FORCE_COLOR": "true",
               "isDevCliChild": "true",
             },
             "nodeOptions": Array [
-              "--preserve-symlinks-main",
-              "--preserve-symlinks",
+              "--inheritted",
+              "--exec",
+              "--argv",
             ],
             "stdio": "pipe",
           },

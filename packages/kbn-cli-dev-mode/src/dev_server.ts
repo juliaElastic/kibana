@@ -1,30 +1,19 @@
 /*
  * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-import { EventEmitter } from 'events';
-
 import * as Rx from 'rxjs';
-import {
-  map,
-  tap,
-  take,
-  share,
-  mergeMap,
-  switchMap,
-  scan,
-  takeUntil,
-  ignoreElements,
-} from 'rxjs/operators';
-import { observeLines } from '@kbn/dev-utils';
+import { map, tap, take, share, mergeMap, switchMap, scan, takeUntil, ignoreElements } from 'rxjs';
+import { observeLines } from '@kbn/stdio-dev-helpers';
 
 import { usingServerProcess } from './using_server_process';
-import { Watcher } from './watcher';
-import { Log } from './log';
+import type { Watcher } from './watcher';
+import type { Log } from './log';
 
 export interface Options {
   log: Log;
@@ -36,6 +25,7 @@ export interface Options {
   sigint$?: Rx.Observable<void>;
   sigterm$?: Rx.Observable<void>;
   mapLogLine?: DevServer['mapLogLine'];
+  forceColor?: boolean;
 }
 
 export class DevServer {
@@ -52,6 +42,7 @@ export class DevServer {
   private readonly argv: string[];
   private readonly gracefulTimeout: number;
   private readonly mapLogLine?: (line: string) => string | null;
+  private readonly forceColor: boolean;
 
   constructor(options: Options) {
     this.log = options.log;
@@ -60,10 +51,11 @@ export class DevServer {
     this.script = options.script;
     this.argv = options.argv;
     this.gracefulTimeout = options.gracefulTimeout;
-    this.processExit$ = options.processExit$ ?? Rx.fromEvent(process as EventEmitter, 'exit');
-    this.sigint$ = options.sigint$ ?? Rx.fromEvent(process as EventEmitter, 'SIGINT');
-    this.sigterm$ = options.sigterm$ ?? Rx.fromEvent(process as EventEmitter, 'SIGTERM');
+    this.processExit$ = options.processExit$ ?? Rx.fromEvent<void>(process, 'exit');
+    this.sigint$ = options.sigint$ ?? Rx.fromEvent<void>(process, 'SIGINT');
+    this.sigterm$ = options.sigterm$ ?? Rx.fromEvent<void>(process, 'SIGTERM');
     this.mapLogLine = options.mapLogLine;
+    this.forceColor = options.forceColor ?? !!process.stdout.isTTY;
   }
 
   isReady$() {
@@ -117,7 +109,7 @@ export class DevServer {
    */
   run$ = new Rx.Observable<void>((subscriber) => {
     // listen for SIGINT and forward to process if it's running, otherwise unsub
-    const gracefulShutdown$ = new Rx.Subject();
+    const gracefulShutdown$ = new Rx.Subject<void>();
     subscriber.add(
       this.sigint$
         .pipe(
@@ -143,8 +135,13 @@ export class DevServer {
       })
     );
 
+    const serverOptions = {
+      script: this.script,
+      argv: this.argv,
+      forceColor: this.forceColor,
+    };
     const runServer = () =>
-      usingServerProcess(this.script, this.argv, (proc) => {
+      usingServerProcess(serverOptions, (proc) => {
         this.phase$.next('starting');
         this.ready$.next(false);
 
@@ -198,16 +195,6 @@ export class DevServer {
             if (msg === 'SERVER_LISTENING') {
               this.phase$.next('listening');
               this.ready$.next(true);
-            }
-
-            // TODO: remove this once Pier is done migrating log rotation to KP
-            if (msg === 'RELOAD_LOGGING_CONFIG_FROM_SERVER_WORKER') {
-              // When receive that event from server worker
-              // forward a reloadLoggingConfig message to parent
-              // and child proc. This is only used by LogRotator service
-              // when the cluster mode is enabled
-              process.emit('message' as any, { reloadLoggingConfig: true } as any);
-              proc.send({ reloadLoggingConfig: true });
             }
           }),
           takeUntil(exit$)

@@ -1,0 +1,14 @@
+{
+  "extends": "@kbn/tsconfig-base/tsconfig.json",
+  "exclude": ["tmp", "target/**/*"],
+  "include": ["./**/*"],
+  "compilerOptions": {
+    "outDir": "target/types",
+    "types": ["node"]
+  },
+  "kbn_references": [
+    "@kbn/test",
+    "@kbn/repo-info",
+    "@kbn/observability-synthetics-test-data",
+  ]
+}

@@ -1,12 +1,14 @@
 /*
  * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-import { BundleCache, State } from './bundle_cache';
+import type { State } from './bundle_cache';
+import { BundleCache } from './bundle_cache';
 
 jest.mock('fs');
 const mockReadFileSync: jest.Mock = jest.requireMock('fs').readFileSync;
@@ -15,7 +17,7 @@ const mockWriteFileSync: jest.Mock = jest.requireMock('fs').writeFileSync;
 
 const SOME_STATE: State = {
   cacheKey: 'abc',
-  files: ['123'],
+  referencedPaths: ['123'],
   moduleCount: 123,
   optimizerCacheKey: 'abc',
 };
@@ -49,7 +51,7 @@ it(`updates files on disk when calling set()`, () => {
         "/foo/.kbn-optimizer-cache",
         "{
       \\"cacheKey\\": \\"abc\\",
-      \\"files\\": [
+      \\"referencedPaths\\": [
         \\"123\\"
       ],
       \\"moduleCount\\": 123,
@@ -94,14 +96,14 @@ it('provides accessors to specific state properties', () => {
   const cache = new BundleCache('/foo');
 
   expect(cache.getModuleCount()).toBe(undefined);
-  expect(cache.getReferencedFiles()).toEqual(undefined);
+  expect(cache.getReferencedPaths()).toEqual(undefined);
   expect(cache.getCacheKey()).toEqual(undefined);
   expect(cache.getOptimizerCacheKey()).toEqual(undefined);
 
   cache.set(SOME_STATE);
 
   expect(cache.getModuleCount()).toBe(123);
-  expect(cache.getReferencedFiles()).toEqual(['123']);
+  expect(cache.getReferencedPaths()).toEqual(['123']);
   expect(cache.getCacheKey()).toEqual('abc');
   expect(cache.getOptimizerCacheKey()).toEqual('abc');
 });

@@ -6,25 +6,15 @@
  */
 
 import React from 'react';
-import { StartDependencies as Start } from '../../plugin';
-import { reactToUiComponent } from '../../../../../../src/plugins/kibana_react/public';
-import { StartServicesGetter } from '../../../../../../src/plugins/kibana_utils/public';
-import { ActionContext, Config, CollectConfigProps } from './types';
+import type { StartServicesGetter } from '@kbn/kibana-utils-plugin/public';
+import type { UiActionsEnhancedDrilldownDefinition as Drilldown } from '@kbn/ui-actions-enhanced-plugin/public';
+import { APPLY_FILTER_TRIGGER } from '@kbn/data-plugin/public';
+import type { ApplyGlobalFilterActionContext } from '@kbn/unified-search-plugin/public';
+import type { StartDependencies as Start } from '../../plugin';
+import type { ActionApi, ActionContext, Config, CollectConfigProps } from './types';
 import { CollectConfigContainer } from './collect_config_container';
 import { SAMPLE_DASHBOARD_TO_DISCOVER_DRILLDOWN } from './constants';
-import { UiActionsEnhancedDrilldownDefinition as Drilldown } from '../../../../../plugins/ui_actions_enhanced/public';
 import { txtGoToDiscover } from './i18n';
-import {
-  ApplyGlobalFilterActionContext,
-  APPLY_FILTER_TRIGGER,
-} from '../../../../../../src/plugins/data/public';
-
-const isOutputWithIndexPatterns = (
-  output: unknown
-): output is { indexPatterns: Array<{ id: string }> } => {
-  if (!output || typeof output !== 'object') return false;
-  return Array.isArray((output as any).indexPatterns);
-};
 
 export interface Params {
   start: StartServicesGetter<Pick<Start, 'data' | 'discover'>>;
@@ -47,11 +37,9 @@ export class DashboardToDiscoverDrilldown
     return [APPLY_FILTER_TRIGGER];
   }
 
-  private readonly ReactCollectConfig: React.FC<CollectConfigProps> = (props) => (
+  public readonly CollectConfig = (props: CollectConfigProps) => (
     <CollectConfigContainer {...props} params={this.params} />
   );
-
-  public readonly CollectConfig = reactToUiComponent(this.ReactCollectConfig);
 
   public readonly createConfig = () => ({
     customIndexPattern: false,
@@ -65,21 +53,21 @@ export class DashboardToDiscoverDrilldown
   };
 
   private readonly getPath = async (config: Config, context: ActionContext): Promise<string> => {
-    const { urlGenerator } = this.params.start().plugins.discover;
+    const { locator } = this.params.start().plugins.discover;
 
-    if (!urlGenerator) throw new Error('Discover URL generator not available.');
+    if (!locator) throw new Error('Discover locator not available.');
 
     let indexPatternId =
       !!config.customIndexPattern && !!config.indexPatternId ? config.indexPatternId : '';
 
-    if (!indexPatternId && !!context.embeddable) {
-      const output = context.embeddable!.getOutput();
-      if (isOutputWithIndexPatterns(output) && output.indexPatterns.length > 0) {
-        indexPatternId = output.indexPatterns[0].id;
+    if (!indexPatternId) {
+      const dataViews = (context?.embeddable as ActionApi).dataViews$?.value;
+      if (dataViews?.[0].id) {
+        indexPatternId = dataViews[0].id;
       }
     }
 
-    return await urlGenerator.createUrl({
+    return await locator.getUrl({
       indexPatternId,
     });
   };

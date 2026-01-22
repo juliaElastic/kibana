@@ -7,17 +7,18 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { BrowserRouter as Router, Route, RouteComponentProps } from 'react-router-dom';
+import { BrowserRouter as Router } from 'react-router-dom';
+import { Route } from '@kbn/shared-ux-router';
 import { EuiPage } from '@elastic/eui';
-import { AppMountParameters, CoreStart } from '../../../../src/core/public';
+import type { AppMountParameters, CoreStart } from '@kbn/core/public';
 
+import type { TriggersAndActionsUIPublicPluginStart } from '@kbn/triggers-actions-ui-plugin/public';
+import { KibanaContextProvider } from '@kbn/kibana-react-plugin/public';
 import { Page } from './components/page';
 import { DocumentationPage } from './components/documentation';
 import { ViewAlertPage } from './components/view_alert';
-import { TriggersAndActionsUIPublicPluginStart } from '../../../plugins/triggers_actions_ui/public';
-import { AlertingExamplePublicStartDeps } from './plugin';
+import type { AlertingExamplePublicStartDeps } from './plugin';
 import { ViewPeopleInSpaceAlertPage } from './components/view_astros_alert';
-import { KibanaContextProvider } from '../../../../src/plugins/kibana_react/public';
 
 export interface AlertingExampleComponentParams {
   http: CoreStart['http'];
@@ -44,7 +45,7 @@ const AlertingExampleApp = ({
         />
         <Route
           path={`/rule/:id`}
-          render={(props: RouteComponentProps<{ id: string }>) => {
+          render={(props) => {
             return (
               <Page title={`View Rule`} crumb={`View Rule ${props.match.params.id}`}>
                 <ViewAlertPage http={http} id={props.match.params.id} />
@@ -54,7 +55,7 @@ const AlertingExampleApp = ({
         />
         <Route
           path={`/astros/:id`}
-          render={(props: RouteComponentProps<{ id: string }>) => {
+          render={(props) => {
             return (
               <Page title={`View People In Space Rule`} crumb={`Astros ${props.match.params.id}`}>
                 <ViewPeopleInSpaceAlertPage http={http} id={props.match.params.id} />

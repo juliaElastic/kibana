@@ -1,9 +1,10 @@
 /*
  * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
 const mockResponse = `155ae63f0bb47050e0c31b4f8c17dadc79dcfa8e8f4ec9e3974fd7592afa9a4f  node-v8.9.4-aix-ppc64.tar.gz
@@ -47,24 +48,25 @@ c4edece2c0aa68e816c4e067f397eb12e9d0c81bb37b3d349dbaf47cf246b0b7  win-x86/node.l
 6a2ee7a0b0074ece27d171418d82ce25a60b87750ec30c5c9fbeaaca8c206fa5  win-x86/node_pdb.7z
 1b44176d888c1bc6a6b05fcc6234031b3b8a58da9de8b99661088f998ac5e269  win-x86/node_pdb.zip`;
 
-jest.mock('axios', () => ({
-  async get(url: string) {
+jest.mock('../../lib/download', () => ({
+  async downloadToString({ url }: { url: string }) {
     expect(url).toBe(
       'https://us-central1-elastic-kibana-184716.cloudfunctions.net/kibana-ci-proxy-cache/dist/v8.9.4/SHASUMS256.txt'
     );
-    return {
-      status: 200,
-      data: mockResponse,
-    };
+    return mockResponse;
   },
 }));
 
-import { ToolingLog } from '@kbn/dev-utils';
+import { ToolingLog } from '@kbn/tooling-log';
 import { getNodeShasums } from './node_shasums';
 
 describe('src/dev/build/tasks/nodejs/node_shasums', () => {
   it('resolves to an object with shasums for node downloads for version', async () => {
-    const shasums = await getNodeShasums(new ToolingLog(), '8.9.4');
+    const shasums = await getNodeShasums(new ToolingLog(), '8.9.4', {
+      getTarget() {
+        return null;
+      },
+    } as any);
     expect(shasums).toEqual(
       expect.objectContaining({
         'node-v8.9.4.tar.gz': '729b44b32b2f82ecd5befac4f7518de0c4e3add34e8fe878f745740a66cbbc01',

@@ -19,22 +19,22 @@ import {
 } from '@elastic/eui';
 import { i18n } from '@kbn/i18n';
 import { flatten } from 'lodash';
+import type { SanitizedRule } from '@kbn/alerting-plugin/common';
+import type { PluginSetupContract as AlertingSetup } from '@kbn/alerting-plugin/public';
+import type { RuleTypeModel } from '@kbn/triggers-actions-ui-plugin/public';
 import { ALERTING_EXAMPLE_APP_ID, Craft, Operator } from '../../common/constants';
-import { SanitizedAlert } from '../../../../plugins/alerting/common';
-import { PluginSetupContract as AlertingSetup } from '../../../../plugins/alerting/public';
-import { AlertTypeModel } from '../../../../plugins/triggers_actions_ui/public';
 
 export function registerNavigation(alerting: AlertingSetup) {
   alerting.registerNavigation(
     ALERTING_EXAMPLE_APP_ID,
     'example.people-in-space',
-    (alert: SanitizedAlert) => `/astros/${alert.id}`
+    (rule: SanitizedRule) => `/app/${ALERTING_EXAMPLE_APP_ID}/astros/${rule.id}`
   );
 }
 
 interface PeopleinSpaceParamsProps {
-  alertParams: { outerSpaceCapacity?: number; craft?: string; op?: string };
-  setAlertParams: (property: string, value: any) => void;
+  ruleParams: { outerSpaceCapacity?: number; craft?: string; op?: string };
+  setRuleParams: (property: string, value: any) => void;
   errors: { [key: string]: string[] };
 }
 
@@ -42,15 +42,15 @@ function isValueInEnum(enumeratin: Record<string, any>, value: any): boolean {
   return !!Object.values(enumeratin).find((enumVal) => enumVal === value);
 }
 
-export function getAlertType(): AlertTypeModel {
+export function getAlertType(): RuleTypeModel {
   return {
     id: 'example.people-in-space',
     description: 'Alert when people are in space right now',
     iconClass: 'globe',
     documentationUrl: null,
-    alertParamsExpression: PeopleinSpaceExpression,
-    validate: (alertParams: PeopleinSpaceParamsProps['alertParams']) => {
-      const { outerSpaceCapacity, craft, op } = alertParams;
+    ruleParamsExpression: PeopleinSpaceExpression,
+    validate: (ruleParams: PeopleinSpaceParamsProps['ruleParams']) => {
+      const { outerSpaceCapacity, craft, op } = ruleParams;
 
       const validationResult = {
         errors: {
@@ -93,24 +93,24 @@ export function getAlertType(): AlertTypeModel {
 }
 
 export const PeopleinSpaceExpression: React.FunctionComponent<PeopleinSpaceParamsProps> = ({
-  alertParams,
-  setAlertParams,
+  ruleParams,
+  setRuleParams,
   errors,
 }) => {
-  const { outerSpaceCapacity = 0, craft = Craft.OuterSpace, op = Operator.AreAbove } = alertParams;
+  const { outerSpaceCapacity = 0, craft = Craft.OuterSpace, op = Operator.AreAbove } = ruleParams;
 
   // store defaults
   useEffect(() => {
-    if (outerSpaceCapacity !== alertParams.outerSpaceCapacity) {
-      setAlertParams('outerSpaceCapacity', outerSpaceCapacity);
+    if (outerSpaceCapacity !== ruleParams.outerSpaceCapacity) {
+      setRuleParams('outerSpaceCapacity', outerSpaceCapacity);
     }
-    if (craft !== alertParams.craft) {
-      setAlertParams('craft', craft);
+    if (craft !== ruleParams.craft) {
+      setRuleParams('craft', craft);
     }
-    if (op !== alertParams.op) {
-      setAlertParams('op', op);
+    if (op !== ruleParams.op) {
+      setRuleParams('op', op);
     }
-  }, [alertParams, craft, op, outerSpaceCapacity, setAlertParams]);
+  }, [ruleParams, craft, op, outerSpaceCapacity, setRuleParams]);
 
   const [craftTrigger, setCraftTrigger] = useState<{ craft: string; isOpen: boolean }>({
     craft,
@@ -139,7 +139,12 @@ export const PeopleinSpaceExpression: React.FunctionComponent<PeopleinSpaceParam
   return (
     <Fragment>
       {errorsCallout.length ? (
-        <EuiCallOut title="Sorry, there was an error" color="danger" iconType="alert">
+        <EuiCallOut
+          announceOnMount
+          title="Sorry, there was an error"
+          color="danger"
+          iconType="warning"
+        >
           {errorsCallout}
         </EuiCallOut>
       ) : (
@@ -177,9 +182,15 @@ export const PeopleinSpaceExpression: React.FunctionComponent<PeopleinSpaceParam
               <EuiPopoverTitle>When the People in</EuiPopoverTitle>
               <EuiSelect
                 compressed
+                aria-label={i18n.translate(
+                  'AlertingExample.peopleInSpaceExpression.craftSelectAriaLabel',
+                  {
+                    defaultMessage: 'Spacecraft',
+                  }
+                )}
                 value={craftTrigger.craft}
                 onChange={(event) => {
-                  setAlertParams('craft', event.target.value);
+                  setRuleParams('craft', event.target.value);
                   setCraftTrigger({
                     craft: event.target.value,
                     isOpen: false,
@@ -226,9 +237,15 @@ export const PeopleinSpaceExpression: React.FunctionComponent<PeopleinSpaceParam
                 <EuiFlexItem grow={false} style={{ width: 150 }}>
                   <EuiSelect
                     compressed
+                    aria-label={i18n.translate(
+                      'AlertingExample.peopleInSpaceExpression.operatorSelectAriaLabel',
+                      {
+                        defaultMessage: 'People in space comparison',
+                      }
+                    )}
                     value={outerSpaceCapacityTrigger.op}
                     onChange={(event) => {
-                      setAlertParams('op', event.target.value);
+                      setRuleParams('op', event.target.value);
                       setOuterSpaceCapacity({
                         ...outerSpaceCapacityTrigger,
                         op: event.target.value,
@@ -248,7 +265,7 @@ export const PeopleinSpaceExpression: React.FunctionComponent<PeopleinSpaceParam
                     compressed
                     value={outerSpaceCapacityTrigger.outerSpaceCapacity}
                     onChange={(event) => {
-                      setAlertParams('outerSpaceCapacity', event.target.valueAsNumber);
+                      setRuleParams('outerSpaceCapacity', event.target.valueAsNumber);
                       setOuterSpaceCapacity({
                         ...outerSpaceCapacityTrigger,
                         outerSpaceCapacity: event.target.valueAsNumber,

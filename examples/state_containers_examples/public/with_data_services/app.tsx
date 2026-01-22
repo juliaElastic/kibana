@@ -1,44 +1,40 @@
 /*
  * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { History } from 'history';
-import { Router } from 'react-router-dom';
+import type { History } from 'history';
+import { Router } from '@kbn/shared-ux-router';
 
 import {
   EuiFieldText,
   EuiPageBody,
-  EuiPageContent,
+  EuiPageTemplate,
   EuiPageHeader,
   EuiText,
   EuiTitle,
 } from '@elastic/eui';
-import { CoreStart } from 'kibana/public';
-import { NavigationPublicPluginStart } from '../../../../src/plugins/navigation/public';
+import type { Filter, Query } from '@kbn/es-query';
+import { FilterStateStore } from '@kbn/es-query';
+import type { CoreStart } from '@kbn/core/public';
+import type { NavigationPublicPluginStart } from '@kbn/navigation-plugin/public';
 
+import type { DataPublicPluginStart, QueryState } from '@kbn/data-plugin/public';
+import { connectToQueryState, syncQueryStateWithUrl } from '@kbn/data-plugin/public';
+import type { DataView } from '@kbn/data-views-plugin/public';
+import type { BaseStateContainer, IKbnUrlStateStorage } from '@kbn/kibana-utils-plugin/public';
 import {
-  connectToQueryState,
-  DataPublicPluginStart,
-  esFilters,
-  Filter,
-  IndexPattern,
-  Query,
-  QueryState,
-  syncQueryStateWithUrl,
-} from '../../../../src/plugins/data/public';
-import {
-  BaseStateContainer,
   createStateContainer,
-  IKbnUrlStateStorage,
   syncState,
   useContainerState,
-} from '../../../../src/plugins/kibana_utils/public';
-import { ExampleLink, StateContainersExamplesPage } from '../common/example_page';
+} from '@kbn/kibana-utils-plugin/public';
+import type { ExampleLink } from '../common/example_page';
+import { StateContainersExamplesPage } from '../common/example_page';
 
 interface StateDemoAppDeps {
   navigateToApp: CoreStart['application']['navigateToApp'];
@@ -73,72 +69,64 @@ export const App = ({
   useGlobalStateSyncing(data.query, kbnUrlStateStorage);
   useAppStateSyncing(appStateContainer, data.query, kbnUrlStateStorage);
 
-  const indexPattern = useIndexPattern(data);
-  if (!indexPattern)
-    return (
-      <div>
-        No index pattern found. Please create an index pattern before trying this example...
-      </div>
-    );
+  const dataView = useDataView(data);
+  if (!dataView)
+    return <div>No data view found. Please create a data view before trying this example...</div>;
 
   // Note that `navigation.ui.TopNavMenu` is a stateful component exported on the `navigation` plugin's start contract.
   return (
     <StateContainersExamplesPage navigateToApp={navigateToApp} exampleLinks={exampleLinks}>
       <Router history={history}>
-        <>
-          <EuiPageBody>
-            <EuiPageHeader>
-              <EuiTitle size="l">
-                <h1>Integration with search bar</h1>
-              </EuiTitle>
-            </EuiPageHeader>
-            <EuiText>
-              <p>
-                This examples shows how you can use state containers, state syncing utils and
-                helpers from data plugin to sync your app state and search bar state with the URL.
-              </p>
-            </EuiText>
+        <EuiPageBody>
+          <EuiPageHeader>
+            <EuiTitle size="l">
+              <h1>Integration with search bar</h1>
+            </EuiTitle>
+          </EuiPageHeader>
+          <EuiText>
+            <p>
+              This examples shows how you can use state containers, state syncing utils and helpers
+              from data plugin to sync your app state and search bar state with the URL.
+            </p>
+          </EuiText>
 
-            <navigation.ui.TopNavMenu
-              appName={'Example'}
-              showSearchBar={true}
-              indexPatterns={[indexPattern]}
-              useDefaultBehaviors={true}
-              showSaveQuery={true}
+          <navigation.ui.TopNavMenu
+            appName={'Example'}
+            showSearchBar={true}
+            indexPatterns={[dataView]}
+            useDefaultBehaviors={true}
+            allowSavingQueries
+          />
+          <EuiPageTemplate.Section>
+            <EuiText>
+              <p>In addition to state from query bar also sync your arbitrary application state:</p>
+            </EuiText>
+            <EuiFieldText
+              placeholder="Additional example applications state: My name is..."
+              value={appState.name}
+              onChange={(e) => appStateContainer.set({ ...appState, name: e.target.value })}
+              aria-label="My name"
             />
-            <EuiPageContent>
-              <EuiText>
-                <p>
-                  In addition to state from query bar also sync your arbitrary application state:
-                </p>
-              </EuiText>
-              <EuiFieldText
-                placeholder="Additional example applications state: My name is..."
-                value={appState.name}
-                onChange={(e) => appStateContainer.set({ ...appState, name: e.target.value })}
-                aria-label="My name"
-              />
-            </EuiPageContent>
-          </EuiPageBody>
-        </>
+          </EuiPageTemplate.Section>
+        </EuiPageBody>
       </Router>
     </StateContainersExamplesPage>
   );
 };
 
-function useIndexPattern(data: DataPublicPluginStart) {
-  const [indexPattern, setIndexPattern] = useState<IndexPattern>();
+function useDataView(data: DataPublicPluginStart) {
+  const [dataView, setDataView] = useState<DataView>();
   useEffect(() => {
-    const fetchIndexPattern = async () => {
-      const defaultIndexPattern = await data.indexPatterns.getDefault();
-      if (defaultIndexPattern) {
-        setIndexPattern(defaultIndexPattern);
+    const fetchDataView = async () => {
+      const defaultDataView = await data.dataViews.getDefault();
+      if (defaultDataView) {
+        setDataView(defaultDataView);
       }
     };
-    fetchIndexPattern();
-  }, [data.indexPatterns]);
+    fetchDataView();
+  }, [data.dataViews]);
 
-  return indexPattern;
+  return dataView;
 }
 
 function useGlobalStateSyncing(
@@ -167,7 +155,7 @@ function useAppStateSyncing<AppState extends QueryState>(
     const stopSyncingQueryAppStateWithStateContainer = connectToQueryState(
       query,
       appStateContainer,
-      { filters: esFilters.FilterStateStore.APP_STATE, query: true }
+      { filters: FilterStateStore.APP_STATE, query: true }
     );
 
     // sets up syncing app state container with url

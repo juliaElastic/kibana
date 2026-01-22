@@ -1,15 +1,16 @@
 /*
  * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
 import Fs from 'fs';
 import Path from 'path';
 
-import webpack from 'webpack';
+import type webpack from 'webpack';
 import { RawSource } from 'webpack-sources';
 
 export interface State {
@@ -17,8 +18,9 @@ export interface State {
   cacheKey?: unknown;
   moduleCount?: number;
   workUnits?: number;
-  files?: string[];
-  bundleRefExportIds?: string[];
+  referencedPaths?: string[];
+  remoteBundleImportReqs?: string[];
+  dllRefKeys?: string[];
 }
 
 const DEFAULT_STATE: State = {};
@@ -82,12 +84,16 @@ export class BundleCache {
     return this.get().moduleCount;
   }
 
-  public getReferencedFiles() {
-    return this.get().files;
+  public getReferencedPaths() {
+    return this.get().referencedPaths;
   }
 
-  public getBundleRefExportIds() {
-    return this.get().bundleRefExportIds;
+  public getRemoteBundleImportReqs() {
+    return this.get().remoteBundleImportReqs;
+  }
+
+  public getDllRefKeys() {
+    return this.get().dllRefKeys;
   }
 
   public getCacheKey() {
@@ -116,7 +122,7 @@ export class BundleCache {
     }
   }
 
-  public writeWebpackAsset(compilation: webpack.compilation.Compilation) {
+  public writeWebpackAsset(compilation: webpack.Compilation) {
     if (!this.path) {
       return;
     }

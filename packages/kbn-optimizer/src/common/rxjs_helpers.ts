@@ -1,14 +1,13 @@
 /*
  * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
 import * as Rx from 'rxjs';
-import { mergeMap, tap, debounceTime, map, toArray } from 'rxjs/operators';
-import { firstValueFrom } from '@kbn/std';
 
 type Operator<T1, T2> = (source: Rx.Observable<T1>) => Rx.Observable<T2>;
 type MapFn<T1, T2> = (item: T1, index: number) => T2;
@@ -29,7 +28,7 @@ export const pipeClosure = <T1, T2>(fn: Operator<T1, T2>): Operator<T1, T2> => {
  * supporting TypeScript
  */
 export const maybe = <T1>(): Operator<T1 | undefined, T1> => {
-  return mergeMap((item) => (item === undefined ? Rx.EMPTY : [item]));
+  return Rx.mergeMap((item) => (item === undefined ? Rx.EMPTY : [item]));
 };
 
 /**
@@ -39,7 +38,7 @@ export const maybe = <T1>(): Operator<T1 | undefined, T1> => {
  * the filter.
  */
 export const maybeMap = <T1, T2>(fn: MapFn<T1, undefined | T2>): Operator<T1, T2> => {
-  return mergeMap((item, index) => {
+  return Rx.mergeMap((item, index) => {
     const result = fn(item, index);
     return result === undefined ? Rx.EMPTY : [result];
   });
@@ -54,9 +53,9 @@ export const debounceTimeBuffer = <T>(ms: number) =>
   pipeClosure((source$: Rx.Observable<T>) => {
     const buffer: T[] = [];
     return source$.pipe(
-      tap((item) => buffer.push(item)),
-      debounceTime(ms),
-      map(() => {
+      Rx.tap((item) => buffer.push(item)),
+      Rx.debounceTime(ms),
+      Rx.map(() => {
         const items = Array.from(buffer);
         buffer.length = 0;
         return items;
@@ -65,4 +64,4 @@ export const debounceTimeBuffer = <T>(ms: number) =>
   });
 
 export const allValuesFrom = <T>(observable: Rx.Observable<T>) =>
-  firstValueFrom(observable.pipe(toArray()));
+  Rx.firstValueFrom(observable.pipe(Rx.toArray()));

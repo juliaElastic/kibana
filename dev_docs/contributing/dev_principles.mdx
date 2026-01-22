@@ -2,7 +2,7 @@
 id: kibDevPrinciples
 slug: /kibana-dev-docs/contributing/dev-principles
 title: Developer principles
-summary: Follow our development principles to help keep our code base stable, maintainable and scalable.
+description: Follow our development principles to help keep our code base stable, maintainable and scalable.
 date: 2021-03-04
 tags: ['kibana', 'onboarding', 'dev', 'architecture']
 ---
@@ -84,6 +84,8 @@ Except for highly specialized functionality, dependencies often do more harm in 
 When the use of an external dependency is necessary, ensure there is sufficient integration testing in Kibana to ensure it continues to operate the way we'd expect when we change the consuming code in Kibana or upgrade the dependency code.
 
 Except in specific cases where widespread consensus was gained and clear ownership is established, third party dependencies should not be exposed directly as features of Kibana, whether it be through the UI, HTTP API, or programmatic interfaces.
+
+See the <DocLink id="kibThirdPartyDependencies" text="third-party dependencies guide" /> for more information.
 
 ## Don't share code prematurely
 

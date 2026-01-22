@@ -1,9 +1,10 @@
 /*
  * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
 import Path from 'path';
@@ -14,18 +15,18 @@ import fs from 'fs';
 
 import gulpBrotli from 'gulp-brotli';
 // @ts-expect-error
-import gulpGzip from 'gulp-gzip';
-// @ts-expect-error
 import gulpPostCSS from 'gulp-postcss';
 // @ts-expect-error
 import gulpTerser from 'gulp-terser';
-import { ToolingLog } from '@kbn/dev-utils';
+import type { ToolingLog } from '@kbn/tooling-log';
 import terser from 'terser';
 import vfs from 'vinyl-fs';
 import globby from 'globby';
 import del from 'del';
+import zlib from 'zlib';
 
-import { Task, write } from '../lib';
+import type { Task } from '../lib';
+import { write } from '../lib';
 
 const EUI_THEME_RE = /\.v\d\.(light|dark)\.css$/;
 const ASYNC_CHUNK_RE = /\.chunk\.\d+\.js$/;
@@ -43,33 +44,26 @@ async function optimizeAssets(log: ToolingLog, assetDir: string) {
     log.debug('Minify CSS');
     await asyncPipeline(
       vfs.src(['**/*.css'], { cwd: assetDir }),
-      gulpPostCSS([
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        require('cssnano')({
-          preset: ['default', { discardComments: false }],
-        }),
-      ]),
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      gulpPostCSS(require('@kbn/optimizer/postcss.config').plugins),
       vfs.dest(assetDir)
     );
 
     log.debug('Minify JS');
     await asyncPipeline(
       vfs.src(['**/*.js'], { cwd: assetDir }),
-      gulpTerser({ compress: true, mangle: true }, terser.minify),
+      gulpTerser({ compress: { passes: 2 }, mangle: true }, terser.minify),
       vfs.dest(assetDir)
     );
 
     log.debug('Brotli compress');
     await asyncPipeline(
       vfs.src(['**/*.{js,css}'], { cwd: assetDir }),
-      gulpBrotli(),
-      vfs.dest(assetDir)
-    );
-
-    log.debug('GZip compress');
-    await asyncPipeline(
-      vfs.src(['**/*.{js,css}'], { cwd: assetDir }),
-      gulpGzip(),
+      gulpBrotli({
+        params: {
+          [zlib.constants.BROTLI_PARAM_QUALITY]: zlib.constants.BROTLI_MAX_QUALITY,
+        },
+      }),
       vfs.dest(assetDir)
     );
   } finally {
@@ -129,8 +123,8 @@ function categorizeAssets(assetDirs: string[]) {
 
   for (const { path, category } of assets) {
     if (category === 'euiTheme') {
-      // only track v8.light theme
-      if (path.includes('v8.light')) {
+      // only track borealis.light theme
+      if (path.includes('borealis.light')) {
         add('css', path);
       }
       continue;
