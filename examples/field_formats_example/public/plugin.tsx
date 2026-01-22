@@ -1,73 +1,69 @@
 /*
  * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
  */
+
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { KBN_FIELD_TYPES } from '@kbn/field-types';
-import {
-  AppMountParameters,
-  AppNavLinkStatus,
-  CoreSetup,
-  CoreStart,
-  Plugin,
-} from '../../../src/core/public';
-import { DeveloperExamplesSetup } from '../../developer_examples/public';
-import { App } from './app';
-import { FieldFormatsSetup, FieldFormatsStart } from '../../../src/plugins/field_formats/public';
-import { registerExampleFormat } from './examples/2_creating_custom_formatter';
-import {
+import type { AppMountParameters, CoreSetup, CoreStart, Plugin } from '@kbn/core/public';
+import type { DeveloperExamplesSetup } from '@kbn/developer-examples-plugin/public';
+import type { FieldFormatsSetup, FieldFormatsStart } from '@kbn/field-formats-plugin/public';
+import type {
   IndexPatternFieldEditorStart,
   IndexPatternFieldEditorSetup,
-} from '../../../src/plugins/index_pattern_field_editor/public';
-import { DataPublicPluginStart } from '../../../src/plugins/data/public';
+} from '@kbn/data-view-field-editor-plugin/public';
+import type { DataPublicPluginStart } from '@kbn/data-plugin/public';
+import { registerExampleFormat } from './examples/2_creating_custom_formatter';
+import { App } from './app';
 import { registerExampleFormatEditor } from './examples/3_creating_custom_format_editor';
 import img from './formats.png';
 
 interface SetupDeps {
   developerExamples: DeveloperExamplesSetup;
   fieldFormats: FieldFormatsSetup;
-  indexPatternFieldEditor: IndexPatternFieldEditorSetup;
+  dataViewFieldEditor: IndexPatternFieldEditorSetup;
 }
 
 interface StartDeps {
   fieldFormats: FieldFormatsStart;
-  indexPatternFieldEditor: IndexPatternFieldEditorStart;
+  dataViewFieldEditor: IndexPatternFieldEditorStart;
   data: DataPublicPluginStart;
 }
 
 export class FieldFormatsExamplePlugin implements Plugin<void, void, SetupDeps, StartDeps> {
   public setup(core: CoreSetup<StartDeps>, deps: SetupDeps) {
     registerExampleFormat(deps.fieldFormats);
-    registerExampleFormatEditor(deps.indexPatternFieldEditor);
+    registerExampleFormatEditor(deps.dataViewFieldEditor);
 
     // just for demonstration purposes:
-    // opens a field editor using default index pattern and first number field
-    const openIndexPatternNumberFieldEditor = async () => {
+    // opens a field editor using default data view and first number field
+    const openDateViewNumberFieldEditor = async () => {
       const [, plugins] = await core.getStartServices();
-      const indexPattern = await plugins.data.indexPatterns.getDefault();
-      if (!indexPattern) {
-        alert('Creating at least one index pattern to continue with this example');
+      const dataView = await plugins.data.dataViews.getDefault();
+      if (!dataView) {
+        alert('Create at least one data view to continue with this example');
         return;
       }
 
-      const numberField = indexPattern
-        .getNonScriptedFields()
-        .find((f) => !f.name.startsWith('_') && f.type === KBN_FIELD_TYPES.NUMBER);
+      const numberField = dataView.fields
+        .getAll()
+        .find((f) => !f.name.startsWith('_') && f.type === KBN_FIELD_TYPES.NUMBER && !f.scripted);
 
       if (!numberField) {
         alert(
-          'Default index pattern needs at least a single field of type `number` to continue with this example'
+          'Default data view needs at least a single field of type `number` to continue with this example'
         );
         return;
       }
 
-      plugins.indexPatternFieldEditor.openEditor({
+      plugins.dataViewFieldEditor.openEditor({
         ctx: {
-          indexPattern,
+          dataView,
         },
         fieldName: numberField.name,
       });
@@ -77,11 +73,11 @@ export class FieldFormatsExamplePlugin implements Plugin<void, void, SetupDeps, 
     core.application.register({
       id: 'fieldFormatsExample',
       title: 'Field formats example',
-      navLinkStatus: AppNavLinkStatus.hidden,
+      visibleIn: [],
       async mount({ element }: AppMountParameters) {
         const [, plugins] = await core.getStartServices();
         ReactDOM.render(
-          <App deps={{ fieldFormats: plugins.fieldFormats, openIndexPatternNumberFieldEditor }} />,
+          <App deps={{ fieldFormats: plugins.fieldFormats, openDateViewNumberFieldEditor }} />,
           element
         );
         return () => ReactDOM.unmountComponentAtNode(element);

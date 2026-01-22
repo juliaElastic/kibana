@@ -1,23 +1,23 @@
 /*
  * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-import { Plugin, CoreSetup, AppMountParameters, AppNavLinkStatus } from '../../../src/core/public';
-import { DeveloperExamplesSetup } from '../../developer_examples/public';
-import { ExpressionsSetup, ExpressionsStart } from '../../../src/plugins/expressions/public';
-import {
+import type { Plugin, CoreSetup, AppMountParameters } from '@kbn/core/public';
+import type { DeveloperExamplesSetup } from '@kbn/developer-examples-plugin/public';
+import type { ExpressionsSetup, ExpressionsStart } from '@kbn/expressions-plugin/public';
+import type {
   Setup as InspectorSetup,
   Start as InspectorStart,
-} from '../../../src/plugins/inspector/public';
+} from '@kbn/inspector-plugin/public';
+import type { UiActionsStart, UiActionsSetup } from '@kbn/ui-actions-plugin/public';
 import { getExpressionsInspectorViewDescription } from './inspector';
-import { UiActionsStart, UiActionsSetup } from '../../../src/plugins/ui_actions/public';
 import { NAVIGATE_TRIGGER_ID, navigateTrigger } from './actions/navigate_trigger';
-import { ACTION_NAVIGATE, createNavigateAction } from './actions/navigate_action';
-import { buttonRenderer } from './renderers/button';
+import { getButtonRenderer } from './renderers/button';
 import { buttonFn } from './functions/button';
 
 interface StartDeps {
@@ -40,25 +40,32 @@ export class ExpressionsExplorerPlugin implements Plugin<void, void, SetupDeps, 
 
     // register custom actions
     deps.uiActions.registerTrigger(navigateTrigger);
-    deps.uiActions.registerAction(createNavigateAction());
-    deps.uiActions.attachAction(NAVIGATE_TRIGGER_ID, ACTION_NAVIGATE);
+    deps.uiActions.addTriggerActionAsync(NAVIGATE_TRIGGER_ID, 'ACTION_NAVIGATE', async () => {
+      const { createNavigateAction } = await import('./actions/navigate_action');
+      return createNavigateAction();
+    });
 
     // register custom functions and renderers
-    deps.expressions.registerRenderer(buttonRenderer);
+    deps.expressions.registerRenderer(getButtonRenderer(core));
     deps.expressions.registerFunction(buttonFn);
 
     core.application.register({
       id: 'expressionsExplorer',
       title: 'Expressions Explorer',
-      navLinkStatus: AppNavLinkStatus.hidden,
+      visibleIn: [],
       async mount(params: AppMountParameters) {
-        const [, depsStart] = await core.getStartServices();
+        const [coreStart, depsStart] = await core.getStartServices();
         const { renderApp } = await import('./app');
         return renderApp(
           {
             expressions: depsStart.expressions,
             inspector: depsStart.inspector,
             actions: depsStart.uiActions,
+            uiSettings: core.uiSettings,
+            userProfile: coreStart.userProfile,
+            settings: core.settings,
+            theme: coreStart.theme,
+            i18n: coreStart.i18n,
           },
           params
         );
@@ -72,7 +79,7 @@ export class ExpressionsExplorerPlugin implements Plugin<void, void, SetupDeps, 
       links: [
         {
           label: 'README',
-          href: 'https://github.com/elastic/kibana/blob/main/src/plugins/expressions/README.md',
+          href: 'https://github.com/elastic/kibana/blob/main/src/platform/plugins/shared/expressions/README.asciidoc',
           iconType: 'logoGithub',
           size: 's',
           target: '_blank',

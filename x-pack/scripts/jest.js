@@ -5,5 +5,5 @@
  * 2.0.
  */
 
-require('../../src/setup_node_env/ensure_node_preserve_symlinks');
+require('@kbn/setup-node-env');
 require('@kbn/test').runJest();

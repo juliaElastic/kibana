@@ -12,23 +12,22 @@ import {
   EuiFlexItem,
   EuiPage,
   EuiPageBody,
-  EuiPageContent,
-  EuiPageContentBody,
+  EuiPageSection,
   EuiPageHeader,
   EuiPageHeaderSection,
   EuiTitle,
 } from '@elastic/eui';
-import { IndexPattern } from 'src/plugins/data/public';
-import { CoreStart } from 'kibana/public';
-import { StartDependencies } from './plugin';
-import { AllSeries } from '../../../plugins/observability/public';
+import type { DataView } from '@kbn/data-views-plugin/public';
+import type { CoreStart } from '@kbn/core/public';
+import type { AllSeries } from '@kbn/exploratory-view-plugin/public';
+import type { StartDependencies } from './plugin';
 
 export const App = (props: {
   core: CoreStart;
   plugins: StartDependencies;
-  defaultIndexPattern: IndexPattern | null;
+  defaultIndexPattern: DataView | null;
 }) => {
-  const ExploratoryViewComponent = props.plugins.observability.ExploratoryViewEmbeddable;
+  const ExploratoryViewComponent = props.plugins.exploratoryView.ExploratoryViewEmbeddable;
 
   const seriesList: AllSeries = [
     {
@@ -40,7 +39,7 @@ export const App = (props: {
       reportDefinitions: {
         'monitor.id': ['ALL_VALUES'],
       },
-      breakdown: 'observer.geo.name',
+      breakdown: 'monitor.type',
       operationType: 'average',
       dataType: 'synthetics',
       seriesType: 'line',
@@ -48,7 +47,7 @@ export const App = (props: {
     },
   ];
 
-  const hrefLink = props.plugins.observability.createExploratoryViewUrl(
+  const hrefLink = props.plugins.exploratoryView.createExploratoryViewUrl(
     { reportType: 'kpi-over-time', allSeries: seriesList },
     props.core.http.basePath.get()
   );
@@ -63,26 +62,25 @@ export const App = (props: {
             </EuiTitle>
           </EuiPageHeaderSection>
         </EuiPageHeader>
-        <EuiPageContent>
-          <EuiPageContentBody style={{ maxWidth: 800, margin: '0 auto', height: '70vh' }}>
-            <p>
-              This app embeds an Observability Exploratory view as embeddable component. Make sure
-              you have data in heartbeat-* index within last 5 days for this demo to work.
-            </p>
-            <EuiFlexGroup justifyContent="flexEnd">
-              <EuiFlexItem grow={false}>
-                <EuiButton aria-label="Open in exploratory view" href={hrefLink} target="_blank">
-                  Edit in exploratory view (new tab)
-                </EuiButton>
-              </EuiFlexItem>
-            </EuiFlexGroup>
-            <ExploratoryViewComponent
-              attributes={seriesList}
-              reportType="kpi-over-time"
-              title={'Monitor response duration'}
-            />
-          </EuiPageContentBody>
-        </EuiPageContent>
+        <EuiPageSection>
+          <p>
+            This app embeds an Observability Exploratory view as embeddable component. Make sure you
+            have data in heartbeat-* index within last 5 days for this demo to work.
+          </p>
+          <EuiFlexGroup justifyContent="flexEnd">
+            <EuiFlexItem grow={false}>
+              <EuiButton aria-label="Open in exploratory view" href={hrefLink} target="_blank">
+                Edit in exploratory view (new tab)
+              </EuiButton>
+            </EuiFlexItem>
+          </EuiFlexGroup>
+          <ExploratoryViewComponent
+            attributes={seriesList}
+            reportType="kpi-over-time"
+            title={'Monitor response duration'}
+            withActions={['save', 'explore']}
+          />
+        </EuiPageSection>
       </EuiPageBody>
     </EuiPage>
   );

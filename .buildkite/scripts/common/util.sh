@@ -1,28 +1,73 @@
 #!/usr/bin/env bash
 
-checks-reporter-with-killswitch() {
-  if [ "$CHECKS_REPORTER_ACTIVE" == "true" ] ; then
-    yarn run github-checks-reporter "$@"
-  else
-    arguments=("$@");
-    "${arguments[@]:1}";
-  fi
-}
+source "$(dirname "${BASH_SOURCE[0]}")/vault_fns.sh"
 
 is_pr() {
   [[ "${GITHUB_PR_NUMBER-}" ]] && return
   false
 }
 
-verify_no_git_changes() {
+is_pr_with_label() {
+  match="$1"
+
+  IFS=',' read -ra labels <<< "${GITHUB_PR_LABELS:-}"
+
+  for label in "${labels[@]:-}"
+  do
+    if [ "$label" == "$match" ]; then
+      return
+    fi
+  done
+
+  false
+}
+
+is_auto_commit_disabled() {
+  is_pr_with_label "ci:no-auto-commit"
+}
+
+check_for_changed_files() {
   RED='\033[0;31m'
+  YELLOW='\033[0;33m'
   C_RESET='\033[0m' # Reset color
 
-  GIT_CHANGES="$(git ls-files --modified -- . ':!:.bazelrc')"
+  SHOULD_AUTO_COMMIT_CHANGES="${2:-}"
+  CUSTOM_FIX_MESSAGE="${3:-Changes from $1}"
+  GIT_CHANGES="$(git status --porcelain -- . ':!:config/node.options' ':!config/kibana.yml')"
+
   if [ "$GIT_CHANGES" ]; then
-    echo -e "\n${RED}ERROR: '$1' caused changes to the following files:${C_RESET}\n"
-    echo -e "$GIT_CHANGES\n"
-    exit 1
+    if ! is_auto_commit_disabled && [[ "$SHOULD_AUTO_COMMIT_CHANGES" == "true" && "${BUILDKITE_PULL_REQUEST:-false}" != "false" ]]; then
+      echo "'$1' caused changes to the following files:"
+      echo "$GIT_CHANGES"
+      echo ""
+
+      git config --global user.name kibanamachine
+      git config --global user.email '42973632+kibanamachine@users.noreply.github.com'
+      gh pr checkout "${BUILDKITE_PULL_REQUEST}"
+      git add -A -- . ':!config/node.options' ':!config/kibana.yml'
+      git commit -m "$CUSTOM_FIX_MESSAGE"
+
+      # If COLLECT_COMMITS_MARKER_FILE is set, we're in batch mode (e.g., called from quick checks runner)
+      # Just record the commit for later batch push
+      # Otherwise, commit and push immediately (standalone usage)
+      if [[ -n "${COLLECT_COMMITS_MARKER_FILE:-}" ]]; then
+        echo "Auto-committing these changes (will push after all checks complete)."
+        echo "$CUSTOM_FIX_MESSAGE" >> "$COLLECT_COMMITS_MARKER_FILE"
+      else
+        echo "Auto-committing and pushing these changes."
+        git push
+      fi
+      exit 1
+    else
+      echo -e "\n${RED}ERROR: '$1' caused changes to the following files:${C_RESET}\n"
+      echo -e "$GIT_CHANGES\n"
+      if [ "$CUSTOM_FIX_MESSAGE" ]; then
+        echo "$CUSTOM_FIX_MESSAGE"
+      else
+        echo -e "\n${YELLOW}TO FIX: Run '$1' locally, commit the changes and push to your branch${C_RESET}\n"
+      fi
+      exit 1
+    fi
   fi
 }
 
@@ -85,4 +130,45 @@ set_git_merge_base() {
   fi
 
   export GITHUB_PR_MERGE_BASE
+}
+
+# Download an artifact using the buildkite-agent, takes the same arguments as https://buildkite.com/docs/agent/v3/cli-artifact#downloading-artifacts-usage
+# times-out after 60 seconds and retries up to 3 times
+download_artifact() {
+  retry 3 1 timeout 3m buildkite-agent artifact download "$@"
+}
+
+print_if_dry_run() {
+  if [[ "${DRY_RUN:-}" =~ ^(1|true)$ ]]; then
+    echo "DRY_RUN is enabled."
+  fi
+}
+
+docker_with_retry () {
+  cmd=$1
+  shift
+  args=("$@")
+  attempt=0
+  max_retries=5
+  sleep_time=15
+
+  while true
+  do
+    attempt=$((attempt+1))
+
+    if [ $attempt -gt $max_retries ]
+    then
+      echo "Docker $cmd retries exceeded, aborting."
+      exit 1
+    fi
+
+    if docker "$cmd" "${args[@]}"
+    then
+      echo "Docker $cmd successful."
+      break
+    else
+      echo "Docker $cmd unsuccessful, attempt '$attempt'... Retrying in $sleep_time"
+      sleep $sleep_time
+    fi
+  done
 }

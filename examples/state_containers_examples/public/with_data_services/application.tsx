@@ -1,18 +1,19 @@
 /*
  * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { AppMountParameters, CoreStart } from '../../../../src/core/public';
-import { AppPluginDependencies } from './types';
+import type { AppMountParameters, CoreStart } from '@kbn/core/public';
+import { createKbnUrlStateStorage } from '@kbn/kibana-utils-plugin/public';
+import type { AppPluginDependencies } from './types';
 import { App } from './app';
-import { createKbnUrlStateStorage } from '../../../../src/plugins/kibana_utils/public/';
-import { ExampleLink } from '../common/example_page';
+import type { ExampleLink } from '../common/example_page';
 
 export const renderApp = (
   { notifications, application }: CoreStart,

@@ -5,23 +5,18 @@
  * 2.0.
  */
 
-import {
-  Plugin,
-  CoreSetup,
-  AppMountParameters,
-  AppNavLinkStatus,
-} from '../../../../src/core/public';
-import { PluginSetupContract as AlertingSetup } from '../../../plugins/alerting/public';
-import { ChartsPluginStart } from '../../../../src/plugins/charts/public';
-import {
+import type { Plugin, CoreSetup, AppMountParameters } from '@kbn/core/public';
+import type { PluginSetupContract as AlertingSetup } from '@kbn/alerting-plugin/public';
+import type { ChartsPluginStart } from '@kbn/charts-plugin/public';
+import type {
   TriggersAndActionsUIPublicPluginSetup,
   TriggersAndActionsUIPublicPluginStart,
-} from '../../../plugins/triggers_actions_ui/public';
-import { DataPublicPluginStart } from '../../../../src/plugins/data/public';
+} from '@kbn/triggers-actions-ui-plugin/public';
+import type { DataPublicPluginStart } from '@kbn/data-plugin/public';
+import type { DeveloperExamplesSetup } from '@kbn/developer-examples-plugin/public';
 import { getAlertType as getAlwaysFiringAlertType } from './alert_types/always_firing';
 import { getAlertType as getPeopleInSpaceAlertType } from './alert_types/astros';
 import { registerNavigation } from './alert_types';
-import { DeveloperExamplesSetup } from '../../../../examples/developer_examples/public';
 
 export type Setup = void;
 export type Start = void;
@@ -47,7 +42,7 @@ export class AlertingExamplePlugin implements Plugin<Setup, Start, AlertingExamp
     core.application.register({
       id: 'AlertingExample',
       title: 'Alerting Example',
-      navLinkStatus: AppNavLinkStatus.hidden,
+      visibleIn: [],
       async mount(params: AppMountParameters) {
         const [coreStart, depsStart] = await core.getStartServices();
         const { renderApp } = await import('./application');

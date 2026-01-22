@@ -1,18 +1,20 @@
 /*
  * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
 import React, { Fragment, useMemo, useState } from 'react';
 import { EuiButtonEmpty } from '@elastic/eui';
 import { EuiText } from '@elastic/eui';
 import { EuiDataGrid } from '@elastic/eui';
-import { EuiDataGridCellValueElementProps } from '@elastic/eui';
-import { UiActionsStart } from '../../../src/plugins/ui_actions/public';
-import { USER_TRIGGER, PHONE_TRIGGER, COUNTRY_TRIGGER, User } from './actions/actions';
+import type { EuiDataGridCellValueElementProps } from '@elastic/eui';
+import type { UiActionsStart } from '@kbn/ui-actions-plugin/public';
+import type { User } from './actions/actions';
+import { USER_TRIGGER, PHONE_TRIGGER, COUNTRY_TRIGGER } from './actions/actions';
 
 export interface Props {
   uiActionsApi: UiActionsStart;
@@ -108,7 +110,7 @@ export function TriggerContextExample({ uiActionsApi }: Props) {
 
   const renderCellValue = useMemo(() => {
     return ({ rowIndex, columnId }: EuiDataGridCellValueElementProps) => {
-      return rows.hasOwnProperty(rowIndex) ? rows[rowIndex][columnId] : null;
+      return Object.hasOwn(rows, rowIndex) ? rows[rowIndex][columnId] : null;
     };
   }, [rows]);
 

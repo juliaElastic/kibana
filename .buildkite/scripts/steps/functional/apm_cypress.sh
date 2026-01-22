@@ -2,17 +2,20 @@
 
 set -euo pipefail
 
-source .buildkite/scripts/common/util.sh
+source .buildkite/scripts/steps/functional/common.sh
 
-.buildkite/scripts/bootstrap.sh
-.buildkite/scripts/download_build_artifacts.sh
+export KIBANA_INSTALL_DIR=${KIBANA_BUILD_LOCATION}
 
 export JOB=kibana-apm-cypress
 
 echo "--- APM Cypress Tests"
 
-cd "$XPACK_DIR"
+cd "$XPACK_DIR/solutions/observability/plugins/apm/ftr_e2e"
 
-checks-reporter-with-killswitch "APM Cypress Tests" \
-  node plugins/apm/scripts/test/e2e.js \
-  --kibana-install-dir "$KIBANA_BUILD_LOCATION"
+set +e
+yarn cypress:run; status=$?; yarn junit:merge || :
+
+# Scout reporter
+upload_scout_cypress_events "Cypress tests"
+
+exit $status

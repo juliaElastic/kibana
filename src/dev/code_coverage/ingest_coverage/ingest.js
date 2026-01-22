@@ -1,37 +1,38 @@
 /*
  * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-const { Client } = require('@elastic/elasticsearch');
+const { Client, HttpConnection } = require('elasticsearch-8.x'); // Switch to `@elastic/elasticsearch` when the CI cluster is upgraded.
 import { RESEARCH_CI_JOB_NAME } from './constants';
 import { whichIndex } from './ingest_helpers';
 import { fromNullable } from './either';
 import { always, id, flatMap, ccMark, lazyF } from './utils';
 
 const node = process.env.ES_HOST || 'http://localhost:9200';
-const client = new Client({ node });
+const client = new Client({
+  node,
+  maxRetries: 5,
+  requestTimeout: 60000,
+  Connection: HttpConnection,
+});
 const isResearchJob = process.env.COVERAGE_JOB_NAME === RESEARCH_CI_JOB_NAME ? true : false;
 
 export const ingestList = (log) => async (xs) => {
-  fromNullable(process.env.NODE_ENV).fold(bulkIngest, justLog);
+  await bulkIngest();
 
   async function bulkIngest() {
     log.verbose(`\n${ccMark} Ingesting ${xs.length} docs at a time`);
 
-    const body = parseIndexes(xs);
+    const operations = parseIndexes(xs);
 
-    const { body: bulkResponse } = await client.bulk({ refresh: true, body });
+    const bulkResponse = await client.bulk({ refresh: true, operations });
 
-    handleErrors(body, bulkResponse)(log);
-  }
-
-  function justLog() {
-    log.verbose(`\n${ccMark} Just logging first item from current (buffered) bulk list`);
-    log.verbose(`\n${ccMark} ${JSON.stringify(xs[0], null, 2)}`);
+    handleErrors(operations, bulkResponse)(log);
   }
 };
 

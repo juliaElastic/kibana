@@ -1,16 +1,18 @@
 /*
  * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
 import * as Rx from 'rxjs';
-import { take, map, share } from 'rxjs/operators';
+import { take, map, share } from 'rxjs';
 import Watchpack from 'watchpack';
 
-import { debounceTimeBuffer, Bundle } from '../common';
+import type { Bundle } from '../common';
+import { debounceTimeBuffer } from '../common';
 
 export interface ChangesStarted {
   type: 'changes detected';
@@ -63,7 +65,7 @@ export class Watcher {
           (changes): Changes => ({
             type: 'changes',
             bundles: bundles.filter((bundle) => {
-              const referencedFiles = bundle.cache.getReferencedFiles();
+              const referencedFiles = bundle.cache.getReferencedPaths();
               return changes.some((change) => referencedFiles?.includes(change));
             }),
           })
@@ -73,15 +75,15 @@ export class Watcher {
 
       // call watchpack.watch after listerners are setup
       Rx.defer(() => {
-        const watchPaths: string[] = [];
+        const watchPaths = new Set<string>();
 
         for (const bundle of bundles) {
-          for (const path of bundle.cache.getReferencedFiles() || []) {
-            watchPaths.push(path);
+          for (const path of bundle.cache.getReferencedPaths() || []) {
+            watchPaths.add(path);
           }
         }
 
-        this.watchpack.watch(watchPaths, [], startTime);
+        this.watchpack.watch(Array.from(watchPaths), [], startTime);
         return Rx.EMPTY;
       })
     );

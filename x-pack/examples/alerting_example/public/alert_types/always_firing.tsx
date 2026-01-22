@@ -17,26 +17,22 @@ import {
 } from '@elastic/eui';
 import { i18n } from '@kbn/i18n';
 import { omit, pick } from 'lodash';
-import {
-  ActionGroupWithCondition,
-  AlertConditions,
-  AlertConditionsGroup,
-  AlertTypeModel,
-  AlertTypeParamsExpressionProps,
-} from '../../../../plugins/triggers_actions_ui/public';
-import {
-  AlwaysFiringParams,
-  AlwaysFiringActionGroupIds,
-  DEFAULT_INSTANCES_TO_GENERATE,
-} from '../../common/constants';
+import type {
+  RuleTypeModel,
+  RuleTypeParamsExpressionProps,
+} from '@kbn/triggers-actions-ui-plugin/public';
+import type { AlwaysFiringParams, AlwaysFiringActionGroupIds } from '../../common/constants';
+import { DEFAULT_INSTANCES_TO_GENERATE } from '../../common/constants';
+import type { ActionGroupWithCondition } from '../components';
+import { RuleConditions, RuleConditionsGroup } from '../components';
 
-export function getAlertType(): AlertTypeModel {
+export function getAlertType(): RuleTypeModel {
   return {
     id: 'example.always-firing',
     description: 'Alert when called',
     iconClass: 'bolt',
     documentationUrl: null,
-    alertParamsExpression: AlwaysFiringExpression,
+    ruleParamsExpression: AlwaysFiringExpression,
     validate: (alertParams: AlwaysFiringParams) => {
       const { instances } = alertParams;
       const validationResult = {
@@ -64,12 +60,12 @@ const DEFAULT_THRESHOLDS: AlwaysFiringParams['thresholds'] = {
 };
 
 export const AlwaysFiringExpression: React.FunctionComponent<
-  AlertTypeParamsExpressionProps<AlwaysFiringParams>
-> = ({ alertParams, setAlertParams, actionGroups, defaultActionGroupId }) => {
+  RuleTypeParamsExpressionProps<AlwaysFiringParams>
+> = ({ ruleParams, setRuleParams, actionGroups, defaultActionGroupId }) => {
   const {
     instances = DEFAULT_INSTANCES_TO_GENERATE,
     thresholds = pick(DEFAULT_THRESHOLDS, defaultActionGroupId),
-  } = alertParams;
+  } = ruleParams;
 
   const actionGroupsWithConditions = actionGroups.map((actionGroup) =>
     Number.isInteger(thresholds[actionGroup.id as AlwaysFiringActionGroupIds])
@@ -92,7 +88,7 @@ export const AlwaysFiringExpression: React.FunctionComponent<
               name="instances"
               value={instances}
               onChange={(event) => {
-                setAlertParams('instances', event.target.valueAsNumber);
+                setRuleParams('instances', event.target.valueAsNumber);
               }}
             />
           </EuiFormRow>
@@ -101,31 +97,31 @@ export const AlwaysFiringExpression: React.FunctionComponent<
       <EuiSpacer size="m" />
       <EuiFlexGroup>
         <EuiFlexItem grow={true}>
-          <AlertConditions
+          <RuleConditions
             headline={'Set different thresholds for randomly generated T-Shirt sizes'}
             actionGroups={actionGroupsWithConditions}
             onInitializeConditionsFor={(actionGroup) => {
-              setAlertParams('thresholds', {
+              setRuleParams('thresholds', {
                 ...thresholds,
                 ...pick(DEFAULT_THRESHOLDS, actionGroup.id),
               });
             }}
           >
-            <AlertConditionsGroup
+            <RuleConditionsGroup
               onResetConditionsFor={(actionGroup) => {
-                setAlertParams('thresholds', omit(thresholds, actionGroup.id));
+                setRuleParams('thresholds', omit(thresholds, actionGroup.id));
               }}
             >
               <TShirtSelector
                 setTShirtThreshold={(actionGroup) => {
-                  setAlertParams('thresholds', {
+                  setRuleParams('thresholds', {
                     ...thresholds,
                     [actionGroup.id]: actionGroup.conditions,
                   });
                 }}
               />
-            </AlertConditionsGroup>
-          </AlertConditions>
+            </RuleConditionsGroup>
+          </RuleConditions>
         </EuiFlexItem>
       </EuiFlexGroup>
       <EuiSpacer />

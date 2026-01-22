@@ -1,0 +1,42 @@
+## LIMIT
+
+The `LIMIT` command restricts the number of rows returned by a query.
+
+## Syntax
+
+`LIMIT max_number_of_rows`
+
+### Parameters
+
+#### `max_number_of_rows`
+
+The maximum number of rows to return.
+
+## Description
+
+The `LIMIT` command restricts the number of rows returned by a query. For example:
+
+```esql
+FROM index
+| WHERE field == "value"
+| LIMIT 1000
+```
+
+## Examples
+
+Limit the result to the first 5 rows, sorted by `emp_no` in ascending order:
+
+```esql
+FROM employees
+| SORT emp_no ASC
+| LIMIT 5
+```
+
+## Limitations
+
+- Queries cannot return more than 10,000 rows, even if the `LIMIT` value exceeds this threshold.
+
+To work around this limitation:
+  - Reduce the size of the result set by modifying the query to only return relevant data. This can be achieved by using the WHERE command to select a smaller subset of the data.
+  - Shift any post-query processing to the query itself. The ES|QL STATS ... BY command can be used to aggregate data within the query.
+

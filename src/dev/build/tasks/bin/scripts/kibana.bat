@@ -5,9 +5,8 @@ SETLOCAL ENABLEDELAYEDEXPANSION
 set SCRIPT_DIR=%~dp0
 for %%I in ("%SCRIPT_DIR%..") do set DIR=%%~dpfI
 
-set NODE=%DIR%\node\node.exe
-
-set NODE_ENV="production"
+set NODE=%DIR%\node\default\node.exe
+set NODE_ENV=production
 
 If Not Exist "%NODE%" (
   Echo unable to find usable node.js executable.
@@ -15,7 +14,7 @@ If Not Exist "%NODE%" (
 )
 
 set CONFIG_DIR=%KBN_PATH_CONF%
-If ["%KBN_PATH_CONF%"] == [] (
+If ["%KBN_PATH_CONF%"] == [""] (
   set "CONFIG_DIR=%DIR%\config"
 )
 
@@ -34,7 +33,7 @@ set "NODE_OPTIONS=--no-warnings --max-http-header-size=65536 %NODE_OPTIONS%"
 
 :: This should run independently as the last instruction
 :: as we need NODE_OPTIONS previously set to expand
-"%NODE%" "%DIR%\src\cli\dist" %*
+"%NODE%" "%DIR%\src\cli\kibana\dist" %*
 
 :finally
 
