@@ -10,12 +10,16 @@ import React from 'react';
 import { createFleetTestRendererMock } from '../../../../../../mock';
 import type { Agent, AgentPolicy } from '../../../../types';
 import { useGetPackageInfoByKeyQuery } from '../../../../../../hooks/use_request/epm';
+import { DASHBOARD_LOCATORS_IDS } from '../../../../../../../common/constants';
 
 import { AgentDashboardLink } from './agent_dashboard_link';
 
 const mockedUseGetPackageInfoByKeyQuery = useGetPackageInfoByKeyQuery as jest.MockedFunction<
   typeof useGetPackageInfoByKeyQuery
 >;
+const mockGetRedirectUrl = jest
+  .fn()
+  .mockReturnValue('app/dashboards#/view/elastic_agent-a0001');
 
 jest.mock('../../../../../../hooks/use_fleet_status', () => ({
   FleetStatusProvider: (props: any) => {
@@ -31,13 +35,17 @@ jest.mock('../../../../../../hooks/use_locator', () => {
     useDashboardLocator: jest.fn().mockImplementation(() => {
       return {
         id: 'DASHBOARD_APP_LOCATOR',
-        getRedirectUrl: jest.fn().mockReturnValue('app/dashboards#/view/elastic_agent-a0001'),
+        getRedirectUrl: mockGetRedirectUrl,
       };
     }),
   };
 });
 
 describe('AgentDashboardLink', () => {
+  beforeEach(() => {
+    mockGetRedirectUrl.mockClear();
+  });
+
   it('should enable the button if elastic_agent package is installed and policy has monitoring enabled', async () => {
     mockedUseGetPackageInfoByKeyQuery.mockReturnValue({
       isLoading: false,
@@ -165,5 +173,39 @@ describe('AgentDashboardLink', () => {
     expect(
       result.getByTestId('agentDetails.enableLogsAndMetricsButton').hasAttribute('disabled')
     ).toBeTruthy();
+  });
+
+  it('should render an external OTEL dashboard link for OPAMP agents', async () => {
+    mockedUseGetPackageInfoByKeyQuery.mockReturnValue({
+      isLoading: false,
+      data: {
+        item: {
+          status: 'not_installed',
+        },
+      },
+    } as ReturnType<typeof useGetPackageInfoByKeyQuery>);
+    const testRenderer = createFleetTestRendererMock();
+
+    const result = testRenderer.render(
+      <AgentDashboardLink
+        agent={
+          {
+            id: 'opamp-agent-123',
+            type: 'OPAMP',
+          } as unknown as Agent
+        }
+      />
+    );
+
+    const link = result.getByRole('link');
+    expect(link.hasAttribute('href')).toBeTruthy();
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(mockGetRedirectUrl).toHaveBeenCalledWith({
+      dashboardId: DASHBOARD_LOCATORS_IDS.OTEL_INTERNAL_TELEMETRY,
+      query: {
+        language: 'kuery',
+        query: 'service.instance.id:opamp-agent-123',
+      },
+    });
   });
 });

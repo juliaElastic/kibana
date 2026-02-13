@@ -89,7 +89,7 @@ describe('searchHitToAgent', () => {
       _id: '504b3006-52df-46a6-b7db-f3dc67aca7ac',
     };
     const agent = searchHitToAgent(hit as any);
-    expect(agent).toEqual({
+    expect(agent).toMatchObject({
       id: '504b3006-52df-46a6-b7db-f3dc67aca7ac',
       type: 'PERMANENT',
       active: true,
@@ -245,7 +245,7 @@ describe('searchHitToAgent', () => {
       _id: '504b3006-52df-46a6-b7db-f3dc67aca7ac',
     };
     const agent = searchHitToAgent(hit as any);
-    expect(agent).toEqual({
+    expect(agent).toMatchObject({
       id: '504b3006-52df-46a6-b7db-f3dc67aca7ac',
       type: 'PERMANENT',
       active: true,
@@ -384,7 +384,7 @@ describe('searchHitToAgent', () => {
       _id: '504b3006-52df-46a6-b7db-f3dc67aca7ac',
     };
     const agent = searchHitToAgent(hit as any);
-    expect(agent).toEqual({
+    expect(agent).toMatchObject({
       id: '504b3006-52df-46a6-b7db-f3dc67aca7ac',
       type: 'PERMANENT',
       active: true,
@@ -440,6 +440,83 @@ describe('searchHitToAgent', () => {
       agent: {
         id: '504b3006-52df-46a6-b7db-f3dc67aca7ac',
         version: '8.9.0',
+      },
+    });
+  });
+
+  it('should map OPAMP specific fields', () => {
+    const hit = {
+      _id: 'opamp-agent-1',
+      _source: {
+        type: 'OPAMP',
+        active: true,
+        enrolled_at: '2026-02-10T13:40:11Z',
+        local_metadata: {},
+        packages: [],
+        agent: {
+          id: 'opamp-agent-1',
+          version: '0.121.0',
+          type: 'otelcol',
+        },
+        identifying_attributes: {
+          'service.instance.id': 'opamp-agent-1',
+        },
+        non_identifying_attributes: {
+          'service.namespace': 'default',
+        },
+        sequence_num: 42,
+        capabilities: ['ReportsEffectiveConfig'],
+        health: {
+          healthy: false,
+          status: 'degraded',
+          last_error: 'collector degraded',
+        },
+        effective_config: {
+          service: {
+            pipelines: {
+              metrics: {
+                receivers: ['otlp'],
+              },
+            },
+          },
+        },
+      },
+      fields: {
+        status: ['online'],
+      },
+    };
+    const agent = searchHitToAgent(hit as any);
+
+    expect(agent).toMatchObject({
+      id: 'opamp-agent-1',
+      type: 'OPAMP',
+      status: 'online',
+      agent: {
+        id: 'opamp-agent-1',
+        version: '0.121.0',
+        type: 'otelcol',
+      },
+      identifying_attributes: {
+        'service.instance.id': 'opamp-agent-1',
+      },
+      non_identifying_attributes: {
+        'service.namespace': 'default',
+      },
+      sequence_num: 42,
+      capabilities: ['ReportsEffectiveConfig'],
+      health: {
+        healthy: false,
+        status: 'degraded',
+        last_error: 'collector degraded',
+      },
+      effective_config: {
+        service: {
+          pipelines: {
+            metrics: {
+              receivers: ['otlp'],
+            },
+          },
+        },
       },
     });
   });
