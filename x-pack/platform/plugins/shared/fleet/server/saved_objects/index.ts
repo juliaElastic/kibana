@@ -1230,11 +1230,8 @@ export const getSavedObjectTypes = (
           install_status: { type: 'keyword' },
           install_source: { type: 'keyword' },
           is_dependency_of: {
-            type: 'nested',
-            properties: {
-              name: { type: 'keyword' },
-              version: { type: 'keyword' },
-            },
+            dynamic: false,
+            properties: {},
           },
           install_format_schema_version: { type: 'version' },
           experimental_data_stream_features: {
@@ -1350,11 +1347,8 @@ export const getSavedObjectTypes = (
               type: 'mappings_addition',
               addedMappings: {
                 is_dependency_of: {
-                  type: 'nested',
-                  properties: {
-                    name: { type: 'keyword' },
-                    version: { type: 'keyword' },
-                  },
+                  dynamic: false,
+                  properties: {},
                 },
               },
             },
