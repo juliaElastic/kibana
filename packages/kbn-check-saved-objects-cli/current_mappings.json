@@ -1520,15 +1520,8 @@
         "type": "boolean"
       },
       "is_dependency_of": {
-        "properties": {
-          "name": {
-            "type": "keyword"
-          },
-          "version": {
-            "type": "keyword"
-          }
-        },
-        "type": "nested"
+        "dynamic": false,
+        "properties": {}
       },
       "keep_policies_up_to_date": {
         "index": false,
