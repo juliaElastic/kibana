@@ -36,6 +36,7 @@ import {
 
 import {
   AgentPolicySchemaV3,
+  EpmPackagesSchemaV6,
   EpmPackagesSchemaV7,
   SettingsSchemaV5,
   SettingsSchemaV6,
