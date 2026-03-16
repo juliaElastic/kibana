@@ -85,6 +85,10 @@ export async function stepResolveDependencies(context: InstallContext) {
                 // install dependency even if it's not the latest in the registry
                 force: true,
                 prerelease: isPrerelease,
+                installedAsDependencyOf: {
+                  name: context.packageInstallContext.packageInfo.name,
+                  version: context.packageInstallContext.packageInfo.version,
+                },
               });
               completed.push({ dependency });
             }
