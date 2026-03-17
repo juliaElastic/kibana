@@ -178,6 +178,38 @@ describe('cleanupDependenciesStep', () => {
     expect(soClientMock.update).not.toHaveBeenCalled();
   });
 
+  it('does not remove or update dependency when is_dependency_of is empty (not installed by parent)', async () => {
+    const installation = {
+      name: 'parent',
+      version: '1.0.0',
+      dependencies: [{ name: 'dep-a', version: '1.0.0' }],
+      installed_kibana: [],
+      installed_es: [],
+    } as any;
+    mockGetInstallation.mockImplementation(({ pkgName }: { pkgName: string }) => {
+      if (pkgName === 'dep-a') {
+        return Promise.resolve({
+          name: 'dep-a',
+          version: '1.0.0',
+          is_dependency_of: [],
+          installed_kibana: [],
+          installed_es: [],
+        } as any);
+      }
+      return Promise.resolve(undefined);
+    });
+
+    await cleanupDependenciesStep({
+      savedObjectsClient: soClientMock,
+      pkgName: 'parent',
+      installation,
+      esClient: esClientMock,
+    });
+
+    expect(soClientMock.update).not.toHaveBeenCalled();
+    expect(soClientMock.delete).not.toHaveBeenCalled();
+  });
+
   it('updates dep is_dependency_of and does not remove when other dependants remain', async () => {
     const installation = {
       name: 'parent',

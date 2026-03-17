@@ -100,16 +100,19 @@ export async function cleanupDependenciesStep(options: {
         });
         continue;
       }
+      appContextService.getLogger().info(`Removing dependency ${dep.name}@${dep.version}`);
+      // If this was the last dependency, remove the package
+      await removeInstallation({
+        savedObjectsClient,
+        pkgName: dep.name,
+        pkgVersion: dep.version,
+        esClient,
+        force,
+        installSource,
+      });
+    } else {
+      // dependency was not installed by this package, so don't remove it
     }
-    // If this was the last dependency, remove the package
-    await removeInstallation({
-      savedObjectsClient,
-      pkgName: dep.name,
-      pkgVersion: dep.version,
-      esClient,
-      force,
-      installSource,
-    });
   }
 }
 
