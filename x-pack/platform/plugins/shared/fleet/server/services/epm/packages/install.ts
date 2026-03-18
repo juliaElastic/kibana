@@ -1322,8 +1322,9 @@ export async function createInstallation(options: {
     keep_policies_up_to_date: defaultKeepPoliciesUpToDate,
     verification_status: 'unknown',
     ...(dependencies ? { dependencies } : {}),
-    ...(installedAsDependencyOf ? { is_dependency_of: [installedAsDependencyOf] } : {}),
-    installed_as_dependency: !!installedAsDependencyOf,
+    ...(installedAsDependencyOf
+      ? { is_dependency_of: [installedAsDependencyOf], installed_as_dependency: true }
+      : {}),
   };
 
   if (verificationResult) {
