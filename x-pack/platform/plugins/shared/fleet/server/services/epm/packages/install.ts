@@ -1249,6 +1249,12 @@ export async function restartInstallation(options: {
       options.installedAsDependencyOf,
       options.existingIsDependencyOf
     );
+    // Do not overwrite installed_as_dependency here: if the package was manually installed
+    // before becoming a dependency (e.g. it is being updated to satisfy a new constraint),
+    // we want to preserve the existing false value so cleanup won't auto-remove it.
+  } else {
+    // Explicit user install: ensure the package is not marked as a pure dependency.
+    savedObjectUpdate.installed_as_dependency = false;
   }
 
   if (verificationResult) {
@@ -1317,6 +1323,7 @@ export async function createInstallation(options: {
     verification_status: 'unknown',
     ...(dependencies ? { dependencies } : {}),
     ...(installedAsDependencyOf ? { is_dependency_of: [installedAsDependencyOf] } : {}),
+    installed_as_dependency: !!installedAsDependencyOf,
   };
 
   if (verificationResult) {

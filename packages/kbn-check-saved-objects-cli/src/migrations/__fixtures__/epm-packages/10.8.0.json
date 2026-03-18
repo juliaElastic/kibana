@@ -58,7 +58,8 @@
             "name": "parent",
             "version": "1.0.0"
             }
-        ]
+        ],
+        "installed_as_dependency": true
       }
     ]
   }

@@ -106,6 +106,14 @@ export async function cleanupDependenciesStep(options: {
         });
         continue;
       }
+      if (!depInstallation.installed_as_dependency) {
+        appContextService
+          .getLogger()
+          .info(
+            `Skipping removal of dependency ${dep.name}@${dep.version} because it was manually installed`
+          );
+        continue;
+      }
       appContextService.getLogger().info(`Removing dependency ${dep.name}@${dep.version}`);
       // If this was the last dependency, remove the package
       await removeInstallation({

@@ -261,6 +261,7 @@ describe('cleanupDependenciesStep', () => {
           name: 'dep-a',
           version: '1.0.0',
           is_dependency_of: [{ name: 'parent', version: '1.0.0' }],
+          installed_as_dependency: true,
           dependencies: [],
           installed_kibana: [],
           installed_es: [],

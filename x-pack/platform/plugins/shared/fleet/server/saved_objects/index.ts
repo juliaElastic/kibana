@@ -1233,6 +1233,7 @@ export const getSavedObjectTypes = (
             dynamic: false,
             properties: {},
           },
+          installed_as_dependency: { type: 'boolean' },
           install_format_schema_version: { type: 'version' },
           experimental_data_stream_features: {
             type: 'nested',
@@ -1350,6 +1351,7 @@ export const getSavedObjectTypes = (
                   dynamic: false,
                   properties: {},
                 },
+                installed_as_dependency: { type: 'boolean' },
               },
             },
           ],

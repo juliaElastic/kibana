@@ -453,6 +453,7 @@
     "keep_policies_up_to_date",
     "latest_executed_state",
     "latest_install_failed_attempts",
+    "installed_as_dependency",
     "name",
     "package_assets",
     "pending_upgrade_review",

@@ -759,6 +759,8 @@ export interface Installation {
   dependencies?: PackageDependencies | null;
   /** Packages (name, version) that have this package as a dependency */
   is_dependency_of?: IsDependencyOf | null;
+  /** Whether the package was installed as a dependency (not manually by a user) */
+  installed_as_dependency?: boolean;
 }
 
 export interface PackageUsageStats {
