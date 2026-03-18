@@ -95,6 +95,12 @@ export async function cleanupDependenciesStep(options: {
       );
       // If there are still dependencies, update the package's is_dependency_of
       if (updated.length > 0) {
+        auditLoggingService.writeCustomSoAuditLog({
+          action: 'update',
+          id: pkgName,
+          name: pkgName,
+          savedObjectType: PACKAGES_SAVED_OBJECT_TYPE,
+        });
         await savedObjectsClient.update(PACKAGES_SAVED_OBJECT_TYPE, dep.name, {
           is_dependency_of: updated,
         });
@@ -110,8 +116,6 @@ export async function cleanupDependenciesStep(options: {
         force,
         installSource,
       });
-    } else {
-      // dependency was not installed by this package, so don't remove it
     }
   }
 }
