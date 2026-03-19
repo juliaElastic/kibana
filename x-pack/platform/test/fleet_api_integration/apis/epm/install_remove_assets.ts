@@ -1333,6 +1333,7 @@ const expectAssetsInstalled = ({
       expect({ ...sortedRes, installed_es: [] }).eql({
         ...expectedSavedObject,
         installed_es: [],
+        installed_as_dependency: false,
       });
     }
 
