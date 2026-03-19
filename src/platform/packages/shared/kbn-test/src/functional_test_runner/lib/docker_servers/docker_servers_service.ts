@@ -106,12 +106,12 @@ export class DockerServersService {
     const { image, name, waitFor, waitForLogLine, waitForLogLineTimeoutMs } = server;
 
     // pull image from registry
-    if (server.preferCached && (await this.isImageAvailableLocally(image))) {
-      log.info(`[docker:${name}] skipping pull of docker image "${image}"`);
-    } else {
-      log.info(`[docker:${name}] pulling docker image "${image}"`);
-      await execa('docker', ['pull', image]);
-    }
+    // if (server.preferCached && (await this.isImageAvailableLocally(image))) {
+    //   log.info(`[docker:${name}] skipping pull of docker image "${image}"`);
+    // } else {
+    log.info(`[docker:${name}] pulling docker image "${image}"`);
+    await execa('docker', ['pull', image]);
+    // }
 
     // run the image that we just pulled
     const containerId = await this.dockerRun(server);
@@ -212,14 +212,14 @@ export class DockerServersService {
     ).toPromise();
   }
 
-  private async isImageAvailableLocally(imageUrl: string) {
-    try {
-      const { stdout } = await execa('docker', ['images', '-q', imageUrl]);
-      return stdout.trim().length > 0;
-    } catch {
-      return false;
-    }
-  }
+  // private async isImageAvailableLocally(imageUrl: string) {
+  //   try {
+  //     const { stdout } = await execa('docker', ['images', '-q', imageUrl]);
+  //     return stdout.trim().length > 0;
+  //   } catch {
+  //     return false;
+  //   }
+  // }
 
   private async startServers() {
     if (this.disabled) {
