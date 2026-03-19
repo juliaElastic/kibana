@@ -109,12 +109,12 @@ export function useDockerRegistry() {
   }
 
   async function pullDockerImage() {
-    // if (await isImageAvailableLocally(DOCKER_IMAGE)) {
-    //   logger.info(`skipping pull of docker image "${DOCKER_IMAGE}"`);
-    // } else {
-    logger.info(`pulling docker image "${DOCKER_IMAGE}"`);
-    await execa('docker', ['pull', DOCKER_IMAGE]);
-    // }
+    if (await isImageAvailableLocally(DOCKER_IMAGE)) {
+      logger.info(`skipping pull of docker image "${DOCKER_IMAGE}"`);
+    } else {
+      logger.info(`pulling docker image "${DOCKER_IMAGE}"`);
+      await execa('docker', ['pull', DOCKER_IMAGE]);
+    }
   }
 
   async function cleanupDockerRegistryServer() {
@@ -141,11 +141,11 @@ export function useDockerRegistry() {
   return `http://localhost:${packageRegistryPort}`;
 }
 
-// async function isImageAvailableLocally(imageUrl: string) {
-//   try {
-//     const { stdout } = await execa('docker', ['images', '-q', imageUrl]);
-//     return stdout.trim().length > 0;
-//   } catch {
-//     return false;
-//   }
-// }
+async function isImageAvailableLocally(imageUrl: string) {
+  try {
+    const { stdout } = await execa('docker', ['images', '-q', imageUrl]);
+    return stdout.trim().length > 0;
+  } catch {
+    return false;
+  }
+}
