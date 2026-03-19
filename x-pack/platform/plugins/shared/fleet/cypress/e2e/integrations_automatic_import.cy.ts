@@ -62,16 +62,23 @@ describe('Add Integration - Automatic Import', () => {
         results: relatedResultsForJson,
       },
     });
-    cy.intercept('POST', '/internal/automatic_import/build', {
-      statusCode: 200,
-      body: {},
+    cy.intercept('POST', '/internal/automatic_import/build', (req) => {
+      req.continue((res) => {
+        if (res.statusCode >= 400) {
+          cy.log(
+            `/internal/automatic_import/build failed (${res.statusCode}): ${JSON.stringify(
+              res.body
+            )}`
+          );
+        }
+      });
     });
-    cy.intercept('POST', '/api/fleet/epm/packages', {
-      statusCode: 200,
-      body: {
-        _meta: { install_source: 'upload', name: 'test_integration-1.0.0' },
-        items: [],
-      },
+    cy.intercept('POST', '/api/fleet/epm/packages', (req) => {
+      req.continue((res) => {
+        if (res.statusCode >= 400) {
+          cy.log(`/api/fleet/epm/packages failed (${res.statusCode}): ${JSON.stringify(res.body)}`);
+        }
+      });
     });
   });
 
