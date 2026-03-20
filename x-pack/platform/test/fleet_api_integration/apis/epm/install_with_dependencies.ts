@@ -115,7 +115,7 @@ export default function (providerContext: FtrProviderContext) {
       const depInstallation = await getInstallationSavedObject(DEP_PACKAGE);
       expect(depInstallation?.version).toBe(DEP_VERSION_NEWER);
     });
-    
+
     it('cleans up dependency package when parent is uninstalled', async () => {
       await installPackage(PARENT_PACKAGE, VERSION).expect(200);
 
