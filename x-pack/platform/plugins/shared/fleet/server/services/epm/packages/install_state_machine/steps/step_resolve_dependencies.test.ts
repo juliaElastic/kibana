@@ -210,35 +210,23 @@ describe('stepResolveDependencies', () => {
         spaceId: 'default',
       })
     );
+    expect(appContextService.getLockManagerService).toHaveBeenCalled();
   });
 
-  it('does not use lock manager when context has installedAsDependencyOf', async () => {
-    mockedGetInstalledPackageSavedObjects.mockResolvedValue({
-      saved_objects: [],
-      total: 0,
-      per_page: 0,
-      page: 1,
-    });
-    mockedGetInstallation.mockResolvedValue(undefined);
-    mockedFetchList.mockResolvedValue([{ name: 'dep-a', version: '1.2.0' } as any]);
-
+  it('does not use lock manager when package has no requires.content', async () => {
     await stepResolveDependencies(
       createContext({
-        installedAsDependencyOf: { name: 'parent-pkg', version: '1.0.0' },
         packageInstallContext: {
           packageInfo: {
-            name: 'child',
+            name: 'no-deps',
             version: '1.0.0',
-            requires: {
-              content: [{ package: 'dep-a', version: '^1.0.0' }],
-            },
           },
         },
-      } as any)
+      } as Partial<InstallContext>)
     );
 
     expect(appContextService.getLockManagerService).not.toHaveBeenCalled();
-    expect(mockedInstallPackage).toHaveBeenCalledTimes(1);
+    expect(mockedInstallPackage).not.toHaveBeenCalled();
   });
 
   it('updates dependency when installed version does not satisfy constraint (to_update)', async () => {
