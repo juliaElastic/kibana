@@ -87,6 +87,9 @@ export default function (providerContext: FtrProviderContext) {
       expect(depInstallation).toBeDefined();
       expect(depInstallation?.name).toBe(DEP_PACKAGE);
       expect(depInstallation?.version).toBe(VERSION);
+      expect(depInstallation?.is_dependency_of).toEqual([
+        { name: PARENT_PACKAGE, version: VERSION },
+      ]);
 
       const parentInstallation = await getInstallationSavedObject(PARENT_PACKAGE);
       expect(parentInstallation).toBeDefined();
@@ -111,6 +114,21 @@ export default function (providerContext: FtrProviderContext) {
 
       const depInstallation = await getInstallationSavedObject(DEP_PACKAGE);
       expect(depInstallation?.version).toBe(DEP_VERSION_NEWER);
+    });
+    
+    it('cleans up dependency package when parent is uninstalled', async () => {
+      await installPackage(PARENT_PACKAGE, VERSION).expect(200);
+
+      expect(await installationExists(DEP_PACKAGE)).toBe(true);
+      expect(await installationExists(PARENT_PACKAGE)).toBe(true);
+
+      const uninstallRes = await supertest
+        .delete(`/api/fleet/epm/packages/${PARENT_PACKAGE}/${VERSION}`)
+        .set('kbn-xsrf', 'xxxx');
+      expect(uninstallRes.status).toBe(200);
+
+      expect(await installationExists(PARENT_PACKAGE)).toBe(false);
+      expect(await installationExists(DEP_PACKAGE)).toBe(false);
     });
 
     it('serializes two installs with dependencies via lock (both succeed, no concurrent dependency resolution)', async () => {
