@@ -104,11 +104,11 @@ export async function stepResolveDependencies(context: InstallContext) {
     });
   };
 
-  // When installing as a dependency we are already under the parent's lock; skip re-acquiring to avoid LockAcquisitionError
-  if (context.installedAsDependencyOf !== undefined) {
-    await stepBody();
-  } else {
+  // using lock when resolving dependencies of a package
+  if (context.packageInstallContext.packageInfo.requires?.content !== undefined) {
     await _runWithLock(stepBody);
+  } else {
+    await stepBody();
   }
 }
 

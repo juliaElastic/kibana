@@ -13,7 +13,7 @@ import type { FtrProviderContext } from '../../../api_integration/ftr_provider_c
 import { skipIfNoDockerRegistry, isDockerRegistryEnabledOrSkipped } from '../../helpers';
 
 const PARENT_PACKAGE = 'parent_with_dep';
-const PARENT_WITH_DEP_ALT = 'parent_with_incompatible_dep';
+const PARENT_WITH_DEP_ALT = 'parent_with_dep_alt';
 const DEP_PACKAGE = 'dep_package';
 const VERSION = '1.0.0';
 const DEP_VERSION_NEWER = '2.0.0';
