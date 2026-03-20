@@ -16,6 +16,7 @@ import {
   EuiNotificationBadge,
   EuiLink,
   EuiPortal,
+  EuiIconTip,
 } from '@elastic/eui';
 import { i18n } from '@kbn/i18n';
 
@@ -331,6 +332,37 @@ export const Details: React.FC<Props> = memo(({ packageInfo, integrationInfo }) 
       ),
     });
 
+    const dependencies = packageInfo.requires?.content;
+    if (dependencies && dependencies.length > 0) {
+      items.push({
+        title: (
+          <EuiTextColor color="subdued">
+            <FormattedMessage
+              id="xpack.fleet.epm.dependenciesLabel"
+              defaultMessage="Dependencies"
+            />
+            &nbsp;
+            <EuiIconTip
+              type="info"
+              content={i18n.translate('xpack.fleet.epm.dependenciesTooltip', {
+                defaultMessage:
+                  'The integration requires these dependencies that will be installed with the integration.',
+              })}
+            />
+          </EuiTextColor>
+        ),
+        description: (
+          <>
+            {dependencies.map((dep) => (
+              <p key={dep.package}>
+                {dep.package} {dep.version}
+              </p>
+            ))}
+          </>
+        ),
+      });
+    }
+
     return items;
   }, [
     changelog,
@@ -341,6 +373,7 @@ export const Details: React.FC<Props> = memo(({ packageInfo, integrationInfo }) 
     packageInfo.license,
     packageInfo.licensePath,
     packageInfo.notice,
+    packageInfo.requires,
     packageInfo.source?.license,
     packageInfo.owner.type,
     packageInfo.version,
