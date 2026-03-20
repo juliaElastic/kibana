@@ -33,6 +33,11 @@ jest.mock('../../../../app_context', () => {
       getLogger: jest.fn().mockReturnValue({
         debug: jest.fn(),
       }),
+      getLockManagerService: jest.fn().mockReturnValue({
+        withLock: jest
+          .fn()
+          .mockImplementation((_lockName: string, fn: () => Promise<void>) => fn()),
+      }),
     },
   };
 });
@@ -205,6 +210,35 @@ describe('stepResolveDependencies', () => {
         spaceId: 'default',
       })
     );
+  });
+
+  it('does not use lock manager when context has installedAsDependencyOf', async () => {
+    mockedGetInstalledPackageSavedObjects.mockResolvedValue({
+      saved_objects: [],
+      total: 0,
+      per_page: 0,
+      page: 1,
+    });
+    mockedGetInstallation.mockResolvedValue(undefined);
+    mockedFetchList.mockResolvedValue([{ name: 'dep-a', version: '1.2.0' } as any]);
+
+    await stepResolveDependencies(
+      createContext({
+        installedAsDependencyOf: { name: 'parent-pkg', version: '1.0.0' },
+        packageInstallContext: {
+          packageInfo: {
+            name: 'child',
+            version: '1.0.0',
+            requires: {
+              content: [{ package: 'dep-a', version: '^1.0.0' }],
+            },
+          },
+        },
+      } as any)
+    );
+
+    expect(appContextService.getLockManagerService).not.toHaveBeenCalled();
+    expect(mockedInstallPackage).toHaveBeenCalledTimes(1);
   });
 
   it('updates dependency when installed version does not satisfy constraint (to_update)', async () => {

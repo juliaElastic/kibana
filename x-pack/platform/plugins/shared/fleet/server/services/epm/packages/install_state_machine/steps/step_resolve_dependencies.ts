@@ -11,6 +11,10 @@ import semverRcompare from 'semver/functions/rcompare';
 import semverGt from 'semver/functions/gt';
 import type { SavedObjectsClientContract } from '@kbn/core/server';
 
+import pRetry from 'p-retry';
+
+import { LockAcquisitionError } from '@kbn/lock-manager';
+
 import { appContextService } from '../../../../app_context';
 
 import { type InstallablePackage, SO_SEARCH_LIMIT } from '../../../../../../common';
@@ -100,7 +104,29 @@ export async function stepResolveDependencies(context: InstallContext) {
     });
   };
 
-  await stepBody();
+  // When installing as a dependency we are already under the parent's lock; skip re-acquiring to avoid LockAcquisitionError
+  if (context.installedAsDependencyOf !== undefined) {
+    await stepBody();
+  } else {
+    await _runWithLock(stepBody);
+  }
+}
+
+export async function _runWithLock(stepFn: () => Promise<void>) {
+  return await pRetry(
+    () =>
+      appContextService
+        .getLockManagerService()!
+        .withLock('fleet-resolve-package-dependencies', () => stepFn()),
+    {
+      onFailedAttempt: async (error) => {
+        if (!(error instanceof LockAcquisitionError)) {
+          throw error;
+        }
+      },
+      maxRetryTime: 30 * 1000,
+    }
+  );
 }
 
 async function rollbackDependencyInstalls(
