@@ -6,6 +6,7 @@
  */
 
 import pMap from 'p-map';
+import { isEmpty } from 'lodash';
 import semverSatisfies from 'semver/functions/satisfies';
 import semverRcompare from 'semver/functions/rcompare';
 import semverGt from 'semver/functions/gt';
@@ -31,6 +32,8 @@ import { withPackageSpan } from '../../utils';
 import { PackageDependencyError } from '../../../../../../common/errors';
 import { mergeIsDependencyOf } from '../../dependencies';
 import { auditLoggingService } from '../../../../audit_logging';
+
+const FLEET_RESOLVE_DEPENDENCIES_LOCK_ID = 'fleet-resolve-package-dependencies';
 
 export async function stepResolveDependencies(context: InstallContext) {
   const { logger } = context;
@@ -137,7 +140,7 @@ export async function stepResolveDependencies(context: InstallContext) {
   };
 
   // using lock when resolving dependencies of a package
-  if (context.packageInstallContext.packageInfo.requires?.content !== undefined) {
+  if (!isEmpty(context.packageInstallContext.packageInfo.requires?.content)) {
     await _runWithLock(stepBody);
   } else {
     await stepBody();
@@ -149,7 +152,7 @@ export async function _runWithLock(stepFn: () => Promise<void>) {
     () =>
       appContextService
         .getLockManagerService()!
-        .withLock('fleet-resolve-package-dependencies', () => stepFn()),
+        .withLock(FLEET_RESOLVE_DEPENDENCIES_LOCK_ID, () => stepFn()),
     {
       onFailedAttempt: async (error) => {
         if (!(error instanceof LockAcquisitionError)) {

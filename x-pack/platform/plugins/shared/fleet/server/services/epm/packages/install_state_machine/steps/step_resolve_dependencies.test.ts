@@ -231,6 +231,25 @@ describe('stepResolveDependencies', () => {
     expect(mockedInstallPackage).not.toHaveBeenCalled();
   });
 
+  it('does not use lock manager when requires.content is an empty list', async () => {
+    await stepResolveDependencies(
+      createContext({
+        packageInstallContext: {
+          packageInfo: {
+            name: 'no-deps',
+            version: '1.0.0',
+            requires: {
+              content: [],
+            },
+          },
+        },
+      } as any)
+    );
+
+    expect(appContextService.getLockManagerService).not.toHaveBeenCalled();
+    expect(mockedInstallPackage).not.toHaveBeenCalled();
+  });
+
   it('updates dependency when installed version does not satisfy constraint (to_update)', async () => {
     const emptySavedObjects = {
       saved_objects: [],
