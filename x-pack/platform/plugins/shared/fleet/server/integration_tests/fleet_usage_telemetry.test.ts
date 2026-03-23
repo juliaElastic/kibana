@@ -603,6 +603,7 @@ describe('fleet usage telemetry', () => {
           count_with_global_data_tags: 2,
           count_with_non_default_space: 0,
           avg_number_global_data_tags_per_policy: 2,
+          count_with_agent_version_conditions: 0,
         },
         agent_logs_panics_last_hour: [
           {
@@ -654,5 +655,93 @@ describe('fleet usage telemetry', () => {
       error_msg: '',
       agent_count: 1,
     });
+  });
+
+  it('should fetch version-specific policy telemetry', async () => {
+    const esClient = kbnServer.coreStart.elasticsearch.client.asInternalUser;
+    const soClient = kbnServer.coreStart.savedObjects.getUnsafeInternalClient();
+
+    // Agent policy with version conditions (for VersionSpecificPoliciesUsage)
+    await soClient.create(
+      agentPolicyType,
+      {
+        namespace: 'default',
+        name: 'Version specific policy',
+        description: 'Policy with agent version conditions',
+        inactivity_timeout: 1209600,
+        status: 'active',
+        is_managed: false,
+        revision: 1,
+        updated_by: 'system',
+        schema_version: '1.0.0',
+        has_agent_version_conditions: true,
+        package_agent_version_conditions: [
+          { name: 'apache', title: 'Apache', version_condition: '>=8.0.0' },
+        ],
+        template_agent_version_conditions: [
+          { name: 'nginx', title: 'Nginx', version_condition: '>=9.0.0' },
+        ],
+      },
+      { id: 'policy-vspc' }
+    );
+
+    // Agents enrolled to version-specific policy IDs (policy_id contains '#')
+    await esClient.bulk({
+      index: '.fleet-agents',
+      body: [
+        { create: { _id: 'agent-vspc-1' } },
+        {
+          agent: { version: '8.15.0' },
+          active: true,
+          policy_id: 'policy-vspc#8.15',
+          last_checkin: '2022-11-21T12:26:24Z',
+          last_checkin_status: 'online',
+        },
+        { create: { _id: 'agent-vspc-2' } },
+        {
+          agent: { version: '8.15.0' },
+          active: true,
+          policy_id: 'policy-vspc#8.15',
+          last_checkin: '2022-11-21T12:26:24Z',
+          last_checkin_status: 'online',
+        },
+        { create: { _id: 'agent-vspc-3' } },
+        {
+          agent: { version: '8.14.0' },
+          active: true,
+          policy_id: 'policy-vspc#8.14',
+          last_checkin: '2022-11-21T12:26:24Z',
+          last_checkin_status: 'online',
+        },
+      ],
+      refresh: 'wait_for',
+    });
+
+    try {
+      const usage = await fetchFleetUsage(
+        core,
+        { agents: { enabled: true } },
+        new AbortController()
+      );
+
+      expect(usage?.packages_with_agent_version_conditions).toEqual(
+        expect.arrayContaining(['apache', 'nginx'])
+      );
+      expect(usage?.packages_with_agent_version_conditions).toHaveLength(2);
+      expect(usage?.agents_on_version_specific_policies_per_version).toEqual(
+        expect.arrayContaining([
+          { agent_version: '8.15.0', count: 2 },
+          { agent_version: '8.14.0', count: 1 },
+        ])
+      );
+      expect(usage?.agent_policies).toEqual(
+        expect.objectContaining({ count_with_agent_version_conditions: 1 })
+      );
+    } finally {
+      await esClient.delete({ index: '.fleet-agents', id: 'agent-vspc-1' });
+      await esClient.delete({ index: '.fleet-agents', id: 'agent-vspc-2' });
+      await esClient.delete({ index: '.fleet-agents', id: 'agent-vspc-3' });
+      await soClient.delete(agentPolicyType, 'policy-vspc');
+    }
   });
 });
