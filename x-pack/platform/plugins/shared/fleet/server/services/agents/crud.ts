@@ -632,6 +632,12 @@ export async function getAgentsById(
   const idBatches = chunk(agentIds, SO_SEARCH_LIMIT);
   const agentsById = new Map<string, Agent>();
 
+  if (idBatches.length > 1) {
+    appContextService
+      .getLogger()
+      .debug(`Querying agents in ${idBatches.length} batches because agentIds.length is > 10k`);
+  }
+
   for (const batch of idBatches) {
     const idsQuery = {
       terms: {
