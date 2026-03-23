@@ -9,7 +9,10 @@ import type { ElasticsearchClient, SavedObjectsClientContract } from '@kbn/core/
 
 import { AGENTS_INDEX, SO_SEARCH_LIMIT } from '../../common';
 import { agentPolicyService, getAgentPolicySavedObjectType } from '../services/agent_policy';
-import { appContextService } from '../services';
+import { appContextService, packagePolicyService } from '../services';
+import { getPackageInfo } from '../services/epm/packages';
+import { getAgentTemplateAssetsMap } from '../services/epm/packages/get';
+import { hasAgentVersionConditionInInputTemplate } from '../services/utils/version_specific_policies';
 import { AGENT_POLICY_VERSION_SEPARATOR } from '../constants';
 
 export interface AgentOnVersionSpecificPolicy {
@@ -43,7 +46,10 @@ export const getVersionSpecificPoliciesUsage = async (
       fields: ['package_agent_version_conditions'],
     });
     const packagesSet = new Set<string>();
+    const installedPackages = new Map<string, { name: string; version: string }>();
     let policiesCount = 0;
+
+    const logger = appContextService.getLogger();
 
     for await (const agentPolicyPageResults of agentPolicyFetcher) {
       if (!agentPolicyPageResults.length) {
@@ -54,9 +60,50 @@ export const getVersionSpecificPoliciesUsage = async (
         for (const dep of policy.package_agent_version_conditions ?? []) {
           packagesSet.add(dep.name);
         }
+
+        const packagePolicies = await packagePolicyService.findAllForAgentPolicy(
+          soClient,
+          policy.id
+        );
+        for (const pp of packagePolicies) {
+          if (pp.package?.name && pp.package?.version) {
+            installedPackages.set(`${pp.package.name}@${pp.package.version}`, {
+              name: pp.package.name,
+              version: pp.package.version,
+            });
+          }
+        }
+      }
+    }
+    logger.debug(
+      `Found ${policiesCount} agent policies with version conditions, ${installedPackages.size} unique installed package versions to check`
+    );
+
+    for (const { name, version } of installedPackages.values()) {
+      try {
+        const pkgInfo = await getPackageInfo({
+          savedObjectsClient: soClient,
+          pkgName: name,
+          pkgVersion: version,
+          prerelease: true,
+        });
+        const assetsMap = await getAgentTemplateAssetsMap({
+          savedObjectsClient: soClient,
+          packageInfo: pkgInfo,
+          logger,
+        });
+        if (hasAgentVersionConditionInInputTemplate(assetsMap)) {
+          packagesSet.add(name);
+          logger.debug(`Package ${name}@${version} has agent version conditions in input template`);
+        }
+      } catch {
+        // ignore — package might not be installed or accessible
       }
     }
     const packagesWithAgentVersionConditions = Array.from(packagesSet);
+    logger.debug(
+      `Packages with agent version conditions: ${packagesWithAgentVersionConditions.join(', ')}`
+    );
 
     const response = await esClient.search({
       index: AGENTS_INDEX,
@@ -82,6 +129,11 @@ export const getVersionSpecificPoliciesUsage = async (
       agent_version: bucket.key,
       count: bucket.doc_count,
     }));
+    logger.debug(
+      `Agents on version-specific policies per version: ${agentsOnVersionSpecificPoliciesPerVersion
+        .map((v: AgentOnVersionSpecificPolicy) => `${v.agent_version}: ${v.count}`)
+        .join(', ')}`
+    );
 
     return {
       agent_policies_count: policiesCount,
