@@ -5,6 +5,13 @@
  * 2.0.
  */
 
+import pMap from 'p-map';
+import chunk from 'lodash/chunk';
+
+import type {
+  AggregationsTermsAggregateBase,
+  AggregationsStringTermsBucketKeys,
+} from '@elastic/elasticsearch/lib/api/types';
 import type { ElasticsearchClient, SavedObjectsClientContract } from '@kbn/core/server';
 
 import { AGENTS_INDEX, SO_SEARCH_LIMIT } from '../../common';
@@ -14,6 +21,9 @@ import { getPackageInfo } from '../services/epm/packages';
 import { getAgentTemplateAssetsMap } from '../services/epm/packages/get';
 import { hasAgentVersionConditionInInputTemplate } from '../services/utils/version_specific_policies';
 import { AGENT_POLICY_VERSION_SEPARATOR } from '../constants';
+import { getPackagePolicySavedObjectType } from '../services/package_policy';
+
+const AGENT_POLICY_IDS_BATCH_SIZE = 100;
 
 export interface AgentOnVersionSpecificPolicy {
   agent_version: string;
@@ -48,6 +58,7 @@ export const getVersionSpecificPoliciesUsage = async (
     const packagesSet = new Set<string>();
     const installedPackages = new Map<string, { name: string; version: string }>();
     let policiesCount = 0;
+    const agentPolicyIds: string[] = [];
 
     const logger = appContextService.getLogger();
 
@@ -57,14 +68,25 @@ export const getVersionSpecificPoliciesUsage = async (
       }
       policiesCount += agentPolicyPageResults.length;
       for (const policy of agentPolicyPageResults) {
+        agentPolicyIds.push(policy.id);
         for (const dep of policy.package_agent_version_conditions ?? []) {
           packagesSet.add(dep.name);
         }
+      }
+    }
 
-        const packagePolicies = await packagePolicyService.findAllForAgentPolicy(
-          soClient,
-          policy.id
-        );
+    const packagePolicyType = await getPackagePolicySavedObjectType();
+
+    await pMap(
+      chunk(agentPolicyIds, AGENT_POLICY_IDS_BATCH_SIZE),
+      async (batch) => {
+        const kuery = `${packagePolicyType}.policy_ids:(${batch
+          .map((id) => `"${id}"`)
+          .join(' OR ')})`;
+        const { items: packagePolicies } = await packagePolicyService.list(soClient, {
+          kuery,
+          perPage: SO_SEARCH_LIMIT,
+        });
         for (const pp of packagePolicies) {
           if (pp.package?.name && pp.package?.version) {
             installedPackages.set(`${pp.package.name}@${pp.package.version}`, {
@@ -73,8 +95,10 @@ export const getVersionSpecificPoliciesUsage = async (
             });
           }
         }
-      }
-    }
+      },
+      { concurrency: 1 }
+    );
+
     logger.debug(
       `Found ${policiesCount} agent policies with version conditions, ${installedPackages.size} unique installed package versions to check`
     );
@@ -124,9 +148,12 @@ export const getVersionSpecificPoliciesUsage = async (
     });
 
     const agentsOnVersionSpecificPoliciesPerVersion = (
-      (response?.aggregations?.versions as any).buckets ?? []
-    ).map((bucket: any) => ({
-      agent_version: bucket.key,
+      ((
+        response?.aggregations
+          ?.versions as AggregationsTermsAggregateBase<AggregationsStringTermsBucketKeys>
+      ).buckets ?? []) as AggregationsStringTermsBucketKeys[]
+    ).map((bucket: AggregationsStringTermsBucketKeys) => ({
+      agent_version: bucket.key as string,
       count: bucket.doc_count,
     }));
     logger.debug(
