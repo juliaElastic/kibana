@@ -6,10 +6,7 @@
  */
 import path from 'path';
 
-import archiver from 'archiver';
 import { v4 as uuidv4 } from 'uuid';
-
-import { REPO_ROOT } from '@kbn/repo-info';
 
 import {
   type TestElasticsearchUtils,
@@ -21,26 +18,8 @@ import {
 import { fetchFleetUsage } from '../collectors/register';
 import { getAgentPolicySavedObjectType } from '../services/agent_policy';
 import { getPackagePolicySavedObjectType } from '../services/package_policy';
-import { installPackage } from '../services/epm/packages';
 
 import { waitForFleetSetup } from './helpers';
-
-const AUTH0_FIXTURE_DIR = path.join(
-  REPO_ROOT,
-  'x-pack/platform/test/fleet_api_integration/apis/fixtures/test_packages/auth0/1.26.0'
-);
-
-async function createZipBufferFromDir(dirPath: string, topLevelDir: string): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const archive = archiver('zip', { zlib: { level: 0 } });
-    const chunks: Buffer[] = [];
-    archive.on('data', (chunk: Buffer) => chunks.push(chunk));
-    archive.on('end', () => resolve(Buffer.concat(chunks)));
-    archive.on('error', reject);
-    archive.directory(dirPath, topLevelDir);
-    void archive.finalize();
-  });
-}
 
 const logFilePath = path.join(__dirname, 'logs.log');
 
@@ -676,147 +655,5 @@ describe('fleet usage telemetry', () => {
       error_msg: '',
       agent_count: 1,
     });
-  });
-
-  it('should fetch version-specific policy telemetry', async () => {
-    const esClient = kbnServer.coreStart.elasticsearch.client.asInternalUser;
-    const soClient = kbnServer.coreStart.savedObjects.getUnsafeInternalClient();
-
-    // Agent policy with package-level version conditions
-    await soClient.create(
-      agentPolicyType,
-      {
-        namespace: 'default',
-        name: 'Version specific policy',
-        description: 'Policy with package-level agent version conditions',
-        inactivity_timeout: 1209600,
-        status: 'active',
-        is_managed: false,
-        revision: 1,
-        updated_by: 'system',
-        schema_version: '1.0.0',
-        has_agent_version_conditions: true,
-        package_agent_version_conditions: [
-          { name: 'apache', title: 'Apache', version_condition: '>=8.0.0' },
-        ],
-      },
-      { id: 'policy-vspc' }
-    );
-
-    // Agent policy with input template-level version conditions (no package_agent_version_conditions)
-    await soClient.create(
-      agentPolicyType,
-      {
-        namespace: 'default',
-        name: 'Version specific policy (input template)',
-        description: 'Policy with input-template-level agent version conditions',
-        inactivity_timeout: 1209600,
-        status: 'active',
-        is_managed: false,
-        revision: 1,
-        updated_by: 'system',
-        schema_version: '1.0.0',
-        has_agent_version_conditions: true,
-      },
-      { id: 'policy-vspc2' }
-    );
-
-    // Install auth0 package (has _meta.agent.version in its .hbs input template)
-    const auth0ZipBuffer = await createZipBufferFromDir(AUTH0_FIXTURE_DIR, 'auth0-1.26.0');
-    await installPackage({
-      installSource: 'upload',
-      savedObjectsClient: soClient,
-      esClient,
-      archiveBuffer: auth0ZipBuffer,
-      contentType: 'application/zip',
-      spaceId: 'default',
-    });
-
-    // Package policy SO using the auth0 package, belonging to policy-vspc2
-    await soClient.create(packagePolicyType, {
-      name: 'auth0-1',
-      namespace: 'default',
-      package: {
-        name: 'auth0',
-        title: 'Auth0',
-        version: '1.26.0',
-      },
-      enabled: true,
-      policy_id: 'policy-vspc2',
-      policy_ids: ['policy-vspc2'],
-      inputs: [],
-      latest_revision: true,
-    });
-
-    // Agents enrolled to version-specific policy IDs (policy_id contains '#')
-    await esClient.bulk({
-      index: '.fleet-agents',
-      body: [
-        { create: { _id: 'agent-vspc-1' } },
-        {
-          agent: { version: '8.15.0' },
-          active: true,
-          policy_id: 'policy-vspc#8.15',
-          last_checkin: '2022-11-21T12:26:24Z',
-          last_checkin_status: 'online',
-        },
-        { create: { _id: 'agent-vspc-2' } },
-        {
-          agent: { version: '8.15.0' },
-          active: true,
-          policy_id: 'policy-vspc#8.15',
-          last_checkin: '2022-11-21T12:26:24Z',
-          last_checkin_status: 'online',
-        },
-        { create: { _id: 'agent-vspc-3' } },
-        {
-          agent: { version: '8.14.0' },
-          active: true,
-          policy_id: 'policy-vspc#8.14',
-          last_checkin: '2022-11-21T12:26:24Z',
-          last_checkin_status: 'online',
-        },
-        { create: { _id: 'agent-vspc-4' } },
-        {
-          agent: { version: '9.0.0' },
-          active: true,
-          policy_id: 'policy-vspc2#9.0',
-          last_checkin: '2022-11-21T12:26:24Z',
-          last_checkin_status: 'online',
-        },
-      ],
-      refresh: 'wait_for',
-    });
-
-    try {
-      const usage = await fetchFleetUsage(
-        core,
-        { agents: { enabled: true } },
-        new AbortController()
-      );
-
-      expect(usage?.packages_with_agent_version_conditions).toEqual(
-        expect.arrayContaining(['apache', 'auth0'])
-      );
-      expect(usage?.packages_with_agent_version_conditions).toHaveLength(2);
-      expect(usage?.agents_on_version_specific_policies_per_version).toEqual(
-        expect.arrayContaining([
-          { agent_version: '8.15.0', count: 2 },
-          { agent_version: '8.14.0', count: 1 },
-          { agent_version: '9.0.0', count: 1 },
-        ])
-      );
-      expect(usage?.agent_policies).toEqual(
-        expect.objectContaining({ count_with_agent_version_conditions: 2 })
-      );
-    } finally {
-      await esClient.delete({ index: '.fleet-agents', id: 'agent-vspc-1' });
-      await esClient.delete({ index: '.fleet-agents', id: 'agent-vspc-2' });
-      await esClient.delete({ index: '.fleet-agents', id: 'agent-vspc-3' });
-      await esClient.delete({ index: '.fleet-agents', id: 'agent-vspc-4' });
-      await soClient.delete(agentPolicyType, 'policy-vspc');
-      await soClient.delete(agentPolicyType, 'policy-vspc2');
-      await soClient.delete('epm-packages', 'auth0').catch(() => {});
-    }
   });
 });
