@@ -215,6 +215,8 @@ describe('EnrollmentSettingsHandler utils', () => {
       );
       expect(fleetServerPolicies).toEqual(mockFleetServerPolicies);
       expect(scopedAgentPolicy).toBeUndefined();
+      // Must use the space-scoped soClient, not the internal unscoped one
+      expect(getFleetServerPolicies).toHaveBeenCalledWith(mockSoClient);
     });
 
     it('returns no fleet server policies when there are none and no agent policy ID is provided', async () => {
@@ -224,6 +226,7 @@ describe('EnrollmentSettingsHandler utils', () => {
       );
       expect(fleetServerPolicies).toEqual([]);
       expect(scopedAgentPolicy).toBeUndefined();
+      expect(getFleetServerPolicies).toHaveBeenCalledWith(mockSoClient);
     });
 
     it('returns fleet server policy when specified agent policy ID is a fleet server policy', async () => {
@@ -360,15 +363,11 @@ describe('EnrollmentSettingsHandler utils', () => {
             },
             policies: [
               {
-                download_source_id: 'source-2',
-                fleet_server_host_id: undefined,
                 has_fleet_server: true,
                 id: 'fs-policy-1',
                 is_default_fleet_server: true,
                 is_managed: true,
                 name: 'FS Policy 1',
-                space_ids: undefined,
-                data_output_id: undefined,
               },
             ],
           },

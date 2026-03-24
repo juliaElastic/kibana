@@ -54,7 +54,15 @@ export const getEnrollmentSettingsHandler: FleetRequestHandler<
   };
   // Check if there is any active fleet server enrolled into the fleet server policies policies
   if (fleetServerPolicies) {
-    settingsResponse.fleet_server.policies = fleetServerPolicies;
+    settingsResponse.fleet_server.policies = fleetServerPolicies.map(
+      ({ id, name, is_managed, is_default_fleet_server, has_fleet_server }) => ({
+        id,
+        name,
+        is_managed,
+        is_default_fleet_server,
+        has_fleet_server,
+      })
+    );
     settingsResponse.fleet_server.has_active = await hasFleetServersForPolicies(
       esClient,
       appContextService.getInternalUserSOClientWithoutSpaceExtension(),
@@ -164,10 +172,8 @@ export const getFleetServerOrAgentPolicies = async (
     return {};
   }
 
-  // If an agent policy is not specified, return all fleet server policies
-  const fleetServerPolicies = (
-    await getFleetServerPolicies(appContextService.getInternalUserSOClientWithoutSpaceExtension())
-  ).map(mapPolicy);
+  // If an agent policy is not specified, return fleet server policies visible in the current space
+  const fleetServerPolicies = (await getFleetServerPolicies(soClient)).map(mapPolicy);
   return { fleetServerPolicies };
 };
 

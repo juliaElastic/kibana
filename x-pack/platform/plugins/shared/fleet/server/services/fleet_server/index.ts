@@ -32,7 +32,6 @@ export const getFleetServerPolicies = async (
 ): Promise<AgentPolicy[]> => {
   const fleetServerPackagePolicies = await packagePolicyService.list(soClient, {
     kuery: `${LEGACY_PACKAGE_POLICY_SAVED_OBJECT_TYPE}.package.name:${FLEET_SERVER_PACKAGE}`,
-    spaceId: '*',
   });
 
   // Extract associated fleet server agent policy IDs
