@@ -132,6 +132,14 @@ export default function (providerContext: FtrProviderContext) {
         expect(policyIds).to.contain(testSpacePolicyId);
         expect(policyIds).not.to.contain(defaultSpacePolicyId);
       });
+
+      it('default space has_active should be true even when the active fleet server is in another space', async () => {
+        // Enroll a fleet server agent only in the test space (no agent in default space)
+        await createFleetAgent(esClient, testSpacePolicyId, testSpaceId);
+
+        const res = await apiClient.getEnrollmentSettings();
+        expect(res.fleet_server.has_active).to.be(true);
+      });
     });
 
     describe('With Fleet server setup in default space', () => {

@@ -63,10 +63,17 @@ export const getEnrollmentSettingsHandler: FleetRequestHandler<
         has_fleet_server,
       })
     );
+    // has_active is a global check: fleet servers in any space count as active.
+    // When a specific agentPolicyId was requested, scope the check to that policy only.
+    // Otherwise, query all fleet server policies across all spaces.
+    const unscopedSoClient = appContextService.getInternalUserSOClientWithoutSpaceExtension();
+    const policiesForActiveCheck = agentPolicyId
+      ? fleetServerPolicies
+      : await getFleetServerPolicies(unscopedSoClient);
     settingsResponse.fleet_server.has_active = await hasFleetServersForPolicies(
       esClient,
-      appContextService.getInternalUserSOClientWithoutSpaceExtension(),
-      fleetServerPolicies,
+      unscopedSoClient,
+      policiesForActiveCheck,
       true
     );
   }
@@ -173,7 +180,7 @@ export const getFleetServerOrAgentPolicies = async (
   }
 
   // If an agent policy is not specified, return fleet server policies visible in the current space
-  const fleetServerPolicies = (await getFleetServerPolicies(soClient)).map(mapPolicy);
+  const fleetServerPolicies = (await getFleetServerPolicies(soClient, true)).map(mapPolicy);
   return { fleetServerPolicies };
 };
 
