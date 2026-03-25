@@ -28,12 +28,11 @@ import { getValidSpaceId } from '../spaces/helpers';
  * Retrieve all agent policies which has a Fleet Server package policy
  */
 export const getFleetServerPolicies = async (
-  soClient: SavedObjectsClientContract,
-  onlyCurrentSpace?: boolean
+  soClient: SavedObjectsClientContract
 ): Promise<AgentPolicy[]> => {
   const fleetServerPackagePolicies = await packagePolicyService.list(soClient, {
     kuery: `${LEGACY_PACKAGE_POLICY_SAVED_OBJECT_TYPE}.package.name:${FLEET_SERVER_PACKAGE}`,
-    spaceId: onlyCurrentSpace ? undefined : '*',
+    spaceId: '*',
   });
 
   // Extract associated fleet server agent policy IDs

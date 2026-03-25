@@ -9,7 +9,7 @@ import { httpServerMock, savedObjectsClientMock } from '@kbn/core/server/mocks';
 import { agentPolicyService } from '../../services';
 import { getFleetServerPolicies } from '../../services/fleet_server';
 
-import type { FleetRequestHandlerContext } from '../../types';
+import type { AgentPolicy, FleetRequestHandlerContext } from '../../types';
 import { GetEnrollmentSettingsResponseSchema } from '../../types';
 import { xpackMocks } from '../../mocks';
 
@@ -209,24 +209,25 @@ describe('EnrollmentSettingsHandler utils', () => {
 
   describe('getFleetServerOrAgentPolicies', () => {
     it('returns only fleet server policies if there are any when no agent policy ID is provided', async () => {
-      (getFleetServerPolicies as jest.Mock).mockResolvedValueOnce(mockFleetServerPolicies);
       const { fleetServerPolicies, scopedAgentPolicy } = await getFleetServerOrAgentPolicies(
-        mockSoClient
+        mockSoClient,
+        undefined,
+        mockFleetServerPolicies as AgentPolicy[]
       );
       expect(fleetServerPolicies).toEqual(mockFleetServerPolicies);
       expect(scopedAgentPolicy).toBeUndefined();
-      // Must use the space-scoped soClient with onlyCurrentSpace=true, not the internal unscoped one
-      expect(getFleetServerPolicies).toHaveBeenCalledWith(mockSoClient, true);
+      expect(getFleetServerPolicies).not.toHaveBeenCalled();
     });
 
     it('returns no fleet server policies when there are none and no agent policy ID is provided', async () => {
-      (getFleetServerPolicies as jest.Mock).mockResolvedValueOnce([]);
       const { fleetServerPolicies, scopedAgentPolicy } = await getFleetServerOrAgentPolicies(
-        mockSoClient
+        mockSoClient,
+        undefined,
+        []
       );
       expect(fleetServerPolicies).toEqual([]);
       expect(scopedAgentPolicy).toBeUndefined();
-      expect(getFleetServerPolicies).toHaveBeenCalledWith(mockSoClient, true);
+      expect(getFleetServerPolicies).not.toHaveBeenCalled();
     });
 
     it('returns fleet server policy when specified agent policy ID is a fleet server policy', async () => {
@@ -320,7 +321,7 @@ describe('EnrollmentSettingsHandler utils', () => {
             fleet_server_host_id: undefined,
           },
         ];
-        (getFleetServerPolicies as jest.Mock).mockResolvedValue(fleetServerPolicies);
+        (getFleetServerPolicies as jest.Mock).mockResolvedValueOnce(fleetServerPolicies);
         const expectedResponse = {
           fleet_server: {
             has_active: true,
@@ -411,9 +412,6 @@ describe('EnrollmentSettingsHandler utils', () => {
 
         const validationResp = GetEnrollmentSettingsResponseSchema.validate(expectedResponse);
         expect(validationResp).toEqual(expectedResponse);
-
-        // Called twice: once for the space-scoped policy list, once for the cross-space has_active check
-        expect(getFleetServerPolicies).toHaveBeenCalledTimes(2);
       });
     });
   });
