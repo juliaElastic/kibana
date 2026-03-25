@@ -68,14 +68,20 @@ export default function (providerContext: FtrProviderContext) {
                 is_default_fleet_server: true,
                 is_managed: false,
                 name: 'Fleet Server Policy',
+<<<<<<< HEAD
                 space_ids: [],
+=======
+>>>>>>> 2aa18e30580e ([Fleet] Improvements in enrollment settings API (#259385))
               },
               {
                 id: 'fleet-server-policy-2',
                 is_default_fleet_server: false,
                 is_managed: false,
                 name: 'Fleet Server Policy 2',
+<<<<<<< HEAD
                 space_ids: [],
+=======
+>>>>>>> 2aa18e30580e ([Fleet] Improvements in enrollment settings API (#259385))
               },
             ],
             has_active: true,
@@ -125,7 +131,10 @@ export default function (providerContext: FtrProviderContext) {
                 is_default_fleet_server: false,
                 is_managed: false,
                 name: 'Fleet Server Policy 2',
+<<<<<<< HEAD
                 space_ids: [],
+=======
+>>>>>>> 2aa18e30580e ([Fleet] Improvements in enrollment settings API (#259385))
               },
             ],
             has_active: true,
