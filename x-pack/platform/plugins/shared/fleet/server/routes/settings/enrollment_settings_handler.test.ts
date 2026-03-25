@@ -305,6 +305,7 @@ describe('EnrollmentSettingsHandler utils', () => {
       beforeEach(() => {
         context = xpackMocks.createRequestHandlerContext() as unknown as FleetRequestHandlerContext;
         response = httpServerMock.createResponseFactory();
+        jest.clearAllMocks();
       });
 
       it('should return valid enrollment settings', async () => {
@@ -319,9 +320,7 @@ describe('EnrollmentSettingsHandler utils', () => {
             fleet_server_host_id: undefined,
           },
         ];
-        // Called twice: once for the space-scoped policy list, once for the cross-space has_active check
-        (getFleetServerPolicies as jest.Mock).mockResolvedValueOnce(fleetServerPolicies);
-        (getFleetServerPolicies as jest.Mock).mockResolvedValueOnce(fleetServerPolicies);
+        (getFleetServerPolicies as jest.Mock).mockResolvedValue(fleetServerPolicies);
         const expectedResponse = {
           fleet_server: {
             has_active: true,
@@ -412,6 +411,9 @@ describe('EnrollmentSettingsHandler utils', () => {
 
         const validationResp = GetEnrollmentSettingsResponseSchema.validate(expectedResponse);
         expect(validationResp).toEqual(expectedResponse);
+
+        // Called twice: once for the space-scoped policy list, once for the cross-space has_active check
+        expect(getFleetServerPolicies).toHaveBeenCalledTimes(2);
       });
     });
   });
