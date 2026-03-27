@@ -31,26 +31,24 @@ export default function (providerContext: FtrProviderContext) {
       .send({ force: true });
   };
 
+  const uploadPackage = async (buf: NonSharedBuffer) => {
+    return await supertest
+      .post(`/api/fleet/epm/packages`)
+      .set('kbn-xsrf', 'xxxx')
+      .type('application/zip')
+      .send(buf);
+  };
+
   describe('EPM Templates - OTel config generation for integration packages', () => {
     before(async () => {
       await fleetAndAgents.setup();
       const buf = fs.readFileSync(testPkgArchiveZip);
-      const res = await supertest
-        .post(`/api/fleet/epm/packages`)
-        .set('kbn-xsrf', 'xxxx')
-        .type('application/zip')
-        .send(buf);
+      let res = await uploadPackage(buf);
       if (res.status === 429) {
         await new Promise((resolve) => setTimeout(resolve, 10000));
-        await supertest
-          .post(`/api/fleet/epm/packages`)
-          .set('kbn-xsrf', 'xxxx')
-          .type('application/zip')
-          .send(buf)
-          .expect(200);
-      } else {
-        expect(res.status).to.be(200);
+        res = await uploadPackage(buf);
       }
+      expect(res.status).to.be(200);
     });
 
     after(async () => {
