@@ -1536,6 +1536,152 @@ owner: elastic`,
     });
   });
 
+  describe('getPackageInfo dependency title enrichment', () => {
+    const makePackageInfo = (requires?: object) =>
+      ({
+        name: 'my-package',
+        version: '1.0.0',
+        assets: [],
+        ...(requires ? { requires } : {}),
+      } as unknown as RegistryPackage);
+
+    beforeEach(() => {
+      const soClient = savedObjectsClientMock.create();
+      soClient.get.mockRejectedValue(SavedObjectsErrorHelpers.createGenericNotFoundError());
+    });
+
+    it('enriches dependency entries with the title from the registry', async () => {
+      const soClient = savedObjectsClientMock.create();
+      soClient.get.mockRejectedValue(SavedObjectsErrorHelpers.createGenericNotFoundError());
+
+      const packageInfo = makePackageInfo({
+        content: [{ package: 'dep-pkg', version: '~1.0.0' }],
+      });
+      MockRegistry.fetchInfo.mockResolvedValue(packageInfo);
+      MockRegistry.getPackage.mockResolvedValue({
+        paths: [],
+        assetsMap: new Map(),
+        archiveIterator: createArchiveIteratorFromMap(new Map()),
+        packageInfo,
+      });
+
+      // First call is for the parent package, subsequent calls are for dependencies.
+      // fetchFindLatestPackageOrUndefined is called once for the parent and once per dependency.
+      MockRegistry.fetchFindLatestPackageOrUndefined
+        .mockResolvedValueOnce({ name: 'my-package', version: '1.0.0' } as RegistryPackage)
+        .mockResolvedValueOnce({
+          name: 'dep-pkg',
+          version: '1.0.0',
+          title: 'Dependency Package',
+        } as RegistryPackage);
+
+      const result = await getPackageInfo({
+        savedObjectsClient: soClient,
+        pkgName: 'my-package',
+        pkgVersion: '1.0.0',
+      });
+
+      expect(result.requires?.content).toEqual([
+        { package: 'dep-pkg', version: '~1.0.0', title: 'Dependency Package' },
+      ]);
+    });
+
+    it('falls back to package name as title when registry lookup fails', async () => {
+      const soClient = savedObjectsClientMock.create();
+      soClient.get.mockRejectedValue(SavedObjectsErrorHelpers.createGenericNotFoundError());
+
+      const packageInfo = makePackageInfo({
+        content: [{ package: 'dep-pkg', version: '~1.0.0' }],
+      });
+      MockRegistry.fetchInfo.mockResolvedValue(packageInfo);
+      MockRegistry.getPackage.mockResolvedValue({
+        paths: [],
+        assetsMap: new Map(),
+        archiveIterator: createArchiveIteratorFromMap(new Map()),
+        packageInfo,
+      });
+
+      MockRegistry.fetchFindLatestPackageOrUndefined
+        .mockResolvedValueOnce({ name: 'my-package', version: '1.0.0' } as RegistryPackage)
+        .mockRejectedValueOnce(new Error('registry unavailable'));
+
+      const result = await getPackageInfo({
+        savedObjectsClient: soClient,
+        pkgName: 'my-package',
+        pkgVersion: '1.0.0',
+      });
+
+      expect(result.requires?.content).toEqual([
+        { package: 'dep-pkg', version: '~1.0.0', title: 'dep-pkg' },
+      ]);
+    });
+
+    it('enriches multiple dependencies in parallel', async () => {
+      const soClient = savedObjectsClientMock.create();
+      soClient.get.mockRejectedValue(SavedObjectsErrorHelpers.createGenericNotFoundError());
+
+      const packageInfo = makePackageInfo({
+        content: [
+          { package: 'dep-a', version: '~1.0.0' },
+          { package: 'dep-b', version: '^2.0.0' },
+        ],
+      });
+      MockRegistry.fetchInfo.mockResolvedValue(packageInfo);
+      MockRegistry.getPackage.mockResolvedValue({
+        paths: [],
+        assetsMap: new Map(),
+        archiveIterator: createArchiveIteratorFromMap(new Map()),
+        packageInfo,
+      });
+
+      MockRegistry.fetchFindLatestPackageOrUndefined
+        .mockResolvedValueOnce({ name: 'my-package', version: '1.0.0' } as RegistryPackage)
+        .mockResolvedValueOnce({
+          name: 'dep-a',
+          version: '1.0.0',
+          title: 'Dep A',
+        } as RegistryPackage)
+        .mockResolvedValueOnce({
+          name: 'dep-b',
+          version: '2.1.0',
+          title: 'Dep B',
+        } as RegistryPackage);
+
+      const result = await getPackageInfo({
+        savedObjectsClient: soClient,
+        pkgName: 'my-package',
+        pkgVersion: '1.0.0',
+      });
+
+      expect(result.requires?.content).toEqual([
+        { package: 'dep-a', version: '~1.0.0', title: 'Dep A' },
+        { package: 'dep-b', version: '^2.0.0', title: 'Dep B' },
+      ]);
+    });
+
+    it('leaves requires undefined when there are no dependencies', async () => {
+      const soClient = savedObjectsClientMock.create();
+      soClient.get.mockRejectedValue(SavedObjectsErrorHelpers.createGenericNotFoundError());
+
+      const packageInfo = makePackageInfo();
+      MockRegistry.fetchInfo.mockResolvedValue(packageInfo);
+      MockRegistry.getPackage.mockResolvedValue({
+        paths: [],
+        assetsMap: new Map(),
+        archiveIterator: createArchiveIteratorFromMap(new Map()),
+        packageInfo,
+      });
+
+      const result = await getPackageInfo({
+        savedObjectsClient: soClient,
+        pkgName: 'my-package',
+        pkgVersion: '1.0.0',
+      });
+
+      expect(result.requires).toBeUndefined();
+    });
+  });
+
   describe('getAgentTemplateAssetsMap', () => {
     const assetsMap = new Map([
       ['test-1.0.0/LICENSE.txt', Buffer.from('')],

@@ -354,9 +354,7 @@ export const Details: React.FC<Props> = memo(({ packageInfo, integrationInfo }) 
         description: (
           <>
             {dependencies.map((dep) => (
-              <p key={dep.package}>
-                {dep.package} {dep.version}
-              </p>
+              <p key={dep.package}>{dep.title ?? dep.package}</p>
             ))}
           </>
         ),

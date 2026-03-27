@@ -584,9 +584,24 @@ export async function getPackageInfo({
     );
   }
 
+  const dependenciesWithTitles = await Promise.all(
+    (packageInfo.requires?.content ?? []).map(async (dep) => {
+      const [depPkg] = await Promise.all([
+        Registry.fetchFindLatestPackageOrUndefined(dep.package).catch(() => undefined),
+      ]);
+      return {
+        ...dep,
+        title: depPkg && 'title' in depPkg ? depPkg.title : dep.package,
+      };
+    })
+  );
+
   const updated = {
     ...packageInfo,
     ...additions,
+    ...(dependenciesWithTitles.length > 0
+      ? { requires: { ...packageInfo.requires, content: dependenciesWithTitles } }
+      : {}),
     data_streams: filteredDataStreams,
     policy_templates: filteredPolicyTemplates,
   };

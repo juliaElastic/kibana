@@ -34,6 +34,7 @@ export interface RegistryVarGroup {
 export interface PackageDependency {
   package: string;
   version: string;
+  title?: string;
 }
 
 export interface PackageRequires {

@@ -14,7 +14,7 @@ export const EpmPackagesSchemaV6 = schema.object({
   keep_policies_up_to_date: schema.maybe(schema.boolean()),
   es_index_patterns: schema.maybe(schema.any()),
   verification_status: schema.string(),
-  verification_key_id: schema.maybe(schema.string()),
+  verification_key_id: schema.maybe(schema.oneOf([schema.string(), schema.literal(null)])),
   installed_es: schema.maybe(
     schema.arrayOf(
       schema.object({
