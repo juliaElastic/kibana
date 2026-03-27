@@ -111,7 +111,7 @@ export const hasDynamicSignalTypes = (packageInfo?: PackageInfo): boolean => {
         (template as RegistryPolicyIntegrationTemplate).inputs?.some(
           (input) => input.type === OTEL_COLLECTOR_INPUT_TYPE && input.dynamic_signal_types === true
         )
-    ) === true
+    ) ?? false
   );
 };
 
