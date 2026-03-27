@@ -35,12 +35,22 @@ export default function (providerContext: FtrProviderContext) {
     before(async () => {
       await fleetAndAgents.setup();
       const buf = fs.readFileSync(testPkgArchiveZip);
-      await supertest
+      const res = await supertest
         .post(`/api/fleet/epm/packages`)
         .set('kbn-xsrf', 'xxxx')
         .type('application/zip')
-        .send(buf)
-        .expect(200);
+        .send(buf);
+      if (res.status === 429) {
+        await new Promise((resolve) => setTimeout(resolve, 10000));
+        await supertest
+          .post(`/api/fleet/epm/packages`)
+          .set('kbn-xsrf', 'xxxx')
+          .type('application/zip')
+          .send(buf)
+          .expect(200);
+      } else {
+        expect(res.status).to.be(200);
+      }
     });
 
     after(async () => {
