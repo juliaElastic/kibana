@@ -64,48 +64,22 @@ export default function (providerContext: FtrProviderContext) {
       const otelInputs = body.inputs.filter((input) => input.type === 'otelcol');
       expect(otelInputs).to.have.length(0);
 
-      // OTel collector sections should be present at the top level
-      expect(body.receivers).to.be.an('object');
-      expect(Object.keys(body.receivers!).length).to.be.greaterThan(0);
-
-      expect(body.processors).to.be.an('object');
-      expect(Object.keys(body.processors!).length).to.be.greaterThan(0);
-
-      expect(body.service).to.be.an('object');
-      expect(body.service!.pipelines).to.be.an('object');
-      expect(Object.keys(body.service!.pipelines!).length).to.be.greaterThan(0);
-    });
-
-    it('includes otlp receiver in the OTel config', async () => {
-      const res = await supertest
-        .get(`/api/fleet/epm/templates/${PKG_NAME}/${PKG_VERSION}/inputs?format=json`)
-        .expect(200);
-
+      // includes otlp receiver in the OTel config
       const receivers = res.body.receivers as Record<string, unknown>;
       const receiverKeys = Object.keys(receivers);
 
       // The receiver key is suffixed with the stream id, so just check the prefix
       const hasOtlpReceiver = receiverKeys.some((key) => key.startsWith('otlp/'));
       expect(hasOtlpReceiver).to.be(true);
-    });
 
-    it('includes a logs pipeline in the OTel service config', async () => {
-      const res = await supertest
-        .get(`/api/fleet/epm/templates/${PKG_NAME}/${PKG_VERSION}/inputs?format=json`)
-        .expect(200);
-
+      // includes a logs pipeline in the OTel service config
       const pipelines = res.body.service?.pipelines as Record<string, unknown>;
       const pipelineKeys = Object.keys(pipelines);
 
       const hasLogsPipeline = pipelineKeys.some((key) => key.startsWith('logs/'));
       expect(hasLogsPipeline).to.be(true);
-    });
 
-    it('includes the routing transform processor in the OTel config', async () => {
-      const res = await supertest
-        .get(`/api/fleet/epm/templates/${PKG_NAME}/${PKG_VERSION}/inputs?format=json`)
-        .expect(200);
-
+      // includes the routing transform processor in the OTel config
       const processors = res.body.processors as Record<string, unknown>;
       const processorKeys = Object.keys(processors);
 
