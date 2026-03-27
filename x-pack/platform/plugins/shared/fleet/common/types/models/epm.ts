@@ -322,6 +322,7 @@ export enum RegistryInputKeys {
   hide_in_var_group_options = 'hide_in_var_group_options',
   deprecated = 'deprecated',
   migrate_from = 'migrate_from',
+  dynamic_signal_types = 'dynamic_signal_types',
 }
 
 export type RegistryInputGroup = 'logs' | 'metrics';
@@ -341,6 +342,7 @@ export interface RegistryInput {
   [RegistryInputKeys.hide_in_var_group_options]?: Record<string, string[]>;
   [RegistryInputKeys.deprecated]?: DeprecationInfo;
   [RegistryInputKeys.migrate_from]?: string;
+  [RegistryInputKeys.dynamic_signal_types]?: boolean;
 }
 
 export enum RegistryStreamKeys {

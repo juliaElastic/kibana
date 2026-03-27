@@ -29,13 +29,15 @@ import { hasDynamicSignalTypes } from '../epm/packages/input_type_packages';
 export function generateOtelcolConfig(
   inputs: FullAgentPolicyInput[] | TemplateAgentPolicyInput[],
   dataOutput?: Output,
-  packageInfoCache?: Map<string, PackageInfo>
+  packageInfoCache?: Map<string, PackageInfo>,
+  defaultPackageInfo?: PackageInfo
 ): OTelCollectorConfig {
   const otelConfigs: OTelCollectorConfig[] = inputs
     .filter((input) => input.type === OTEL_COLLECTOR_INPUT_TYPE)
     .flatMap((input) => {
-      // Get package info from input meta if available
-      let packageInfo: PackageInfo | undefined;
+      // Get package info from input meta if available, fall back to defaultPackageInfo
+      // (used for template inputs which have no meta.package)
+      let packageInfo: PackageInfo | undefined = defaultPackageInfo;
 
       if (packageInfoCache && 'meta' in input && (input as FullAgentPolicyInput).meta?.package) {
         const pkgKey = pkgToPkgKey({

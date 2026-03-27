@@ -1230,4 +1230,235 @@ describe('generateOtelcolConfig', () => {
       });
     });
   });
+
+  describe('integration-type packages with otelcol input', () => {
+    const otelIntegrationInput: FullAgentPolicyInput = {
+      type: OTEL_COLLECTOR_INPUT_TYPE,
+      id: 'integration-otel',
+      name: 'integration-otel',
+      revision: 0,
+      data_stream: { namespace: 'default' },
+      use_output: 'default',
+      package_policy_id: 'integration-policy',
+      meta: {
+        package: { name: 'my_integration', version: '1.0.0' },
+      },
+      streams: [
+        {
+          id: 'stream-id-1',
+          data_stream: { dataset: 'my_integration.metrics', type: 'metrics' },
+          service: {
+            pipelines: {
+              'metrics/otlp': {
+                receivers: ['otlp/integration-otel-stream-id-1'],
+                processors: [],
+              },
+            },
+          },
+          receivers: { otlp: {} },
+        },
+      ],
+    };
+
+    it('generates OTel config for integration package with otelcol input', () => {
+      const result = generateOtelcolConfig([otelIntegrationInput], defaultOutput);
+
+      expect(result.receivers).toHaveProperty('otlp/integration-otel-stream-id-1');
+      expect(result.exporters).toHaveProperty('elasticsearch/default');
+      expect(result.service?.pipelines).toHaveProperty('metrics');
+    });
+
+    it('uses defaultPackageInfo for dynamic signal types when packageInfoCache has no meta match', () => {
+      // TemplateAgentPolicyInput has no meta.package — simulate via defaultPackageInfo
+      const templateInput: TemplateAgentPolicyInput = {
+        id: 'integration-otel',
+        type: OTEL_COLLECTOR_INPUT_TYPE,
+        streams: [
+          {
+            id: 'stream-id-1',
+            data_stream: { dataset: 'my_integration.data', type: 'metrics' },
+            service: {
+              pipelines: {
+                'metrics/otlp': {
+                  receivers: ['otlp/integration-otel-stream-id-1'],
+                  processors: [],
+                },
+                'logs/otlp': { receivers: ['otlp/integration-otel-stream-id-1'], processors: [] },
+              },
+            },
+            receivers: { otlp: {} },
+          },
+        ],
+      };
+
+      const integrationPackageInfo = {
+        type: 'integration',
+        name: 'my_integration',
+        version: '1.0.0',
+        policy_templates: [
+          {
+            name: 'my_policy',
+            title: 'My Policy',
+            description: 'My Policy',
+            inputs: [
+              {
+                type: OTEL_COLLECTOR_INPUT_TYPE,
+                title: 'OTel',
+                description: 'OTel',
+                dynamic_signal_types: true,
+              },
+            ],
+          },
+        ],
+      } as any;
+
+      const result = generateOtelcolConfig(
+        [templateInput],
+        undefined,
+        undefined,
+        integrationPackageInfo
+      );
+
+      // With dynamic_signal_types, routing transforms are generated per signal type
+      const routingKey = Object.keys(result.processors ?? {}).find((k) =>
+        k.startsWith('transform/')
+      );
+      expect(routingKey).toBeDefined();
+      const routingProcessor = result.processors?.[routingKey!];
+      // Should have both metric_statements and log_statements for dynamic signal types
+      expect(routingProcessor).toHaveProperty('metric_statements');
+      expect(routingProcessor).toHaveProperty('log_statements');
+    });
+
+    it('falls back to single signal type routing when integration package has no dynamic_signal_types', () => {
+      const templateInput: TemplateAgentPolicyInput = {
+        id: 'integration-otel',
+        type: OTEL_COLLECTOR_INPUT_TYPE,
+        streams: [
+          {
+            id: 'stream-id-1',
+            data_stream: { dataset: 'my_integration.metrics', type: 'metrics' },
+            service: {
+              pipelines: {
+                'metrics/otlp': {
+                  receivers: ['otlp/integration-otel-stream-id-1'],
+                  processors: [],
+                },
+              },
+            },
+            receivers: { otlp: {} },
+          },
+        ],
+      };
+
+      const integrationPackageInfo = {
+        type: 'integration',
+        name: 'my_integration',
+        version: '1.0.0',
+        policy_templates: [
+          {
+            name: 'my_policy',
+            title: 'My Policy',
+            description: 'My Policy',
+            inputs: [{ type: OTEL_COLLECTOR_INPUT_TYPE, title: 'OTel', description: 'OTel' }],
+          },
+        ],
+      } as any;
+
+      const result = generateOtelcolConfig(
+        [templateInput],
+        undefined,
+        undefined,
+        integrationPackageInfo
+      );
+
+      const routingKey = Object.keys(result.processors ?? {}).find((k) =>
+        k.startsWith('transform/')
+      );
+      expect(routingKey).toBeDefined();
+      const routingProcessor = result.processors?.[routingKey!];
+      // Without dynamic_signal_types, only metric_statements (from data_stream.type: metrics)
+      expect(routingProcessor).toHaveProperty('metric_statements');
+      expect(routingProcessor).not.toHaveProperty('log_statements');
+    });
+
+    it('defaultPackageInfo is overridden by packageInfoCache when meta.package is present', () => {
+      // When both are provided, cache takes precedence for inputs that have meta.package
+      const packageInfoCacheWithDynamic = new Map([
+        [
+          'my_integration-1.0.0',
+          {
+            type: 'integration',
+            name: 'my_integration',
+            version: '1.0.0',
+            policy_templates: [
+              {
+                name: 'my_policy',
+                title: 'My Policy',
+                description: 'My Policy',
+                inputs: [
+                  {
+                    type: OTEL_COLLECTOR_INPUT_TYPE,
+                    title: 'OTel',
+                    description: 'OTel',
+                    dynamic_signal_types: true,
+                  },
+                ],
+              },
+            ],
+          } as any,
+        ],
+      ]);
+
+      // defaultPackageInfo says no dynamic_signal_types
+      const defaultPkgInfoNoDynamic = {
+        type: 'integration',
+        name: 'my_integration',
+        version: '1.0.0',
+        policy_templates: [
+          {
+            name: 'my_policy',
+            title: 'My Policy',
+            description: 'My Policy',
+            inputs: [{ type: OTEL_COLLECTOR_INPUT_TYPE, title: 'OTel', description: 'OTel' }],
+          },
+        ],
+      } as any;
+
+      const inputWithMeta: FullAgentPolicyInput = {
+        ...otelIntegrationInput,
+        streams: [
+          {
+            id: 'stream-id-1',
+            data_stream: { dataset: 'my_integration.data', type: 'metrics' },
+            service: {
+              pipelines: {
+                'metrics/otlp': {
+                  receivers: ['otlp/integration-otel-stream-id-1'],
+                  processors: [],
+                },
+                'logs/otlp': { receivers: ['otlp/integration-otel-stream-id-1'], processors: [] },
+              },
+            },
+            receivers: { otlp: {} },
+          },
+        ],
+      };
+
+      const result = generateOtelcolConfig(
+        [inputWithMeta],
+        undefined,
+        packageInfoCacheWithDynamic,
+        defaultPkgInfoNoDynamic
+      );
+
+      const routingKey = Object.keys(result.processors ?? {}).find((k) =>
+        k.startsWith('transform/')
+      );
+      const routingProcessor = result.processors?.[routingKey!];
+      // Cache has dynamic_signal_types: true, so routing should have both metric and log statements
+      expect(routingProcessor).toHaveProperty('metric_statements');
+      expect(routingProcessor).toHaveProperty('log_statements');
+    });
+  });
 });

@@ -20,6 +20,7 @@ import {
   installAssetsForInputPackagePolicy,
   removeAssetsForInputPackagePolicy,
   isInputPackageDatasetUsedByMultiplePolicies,
+  hasDynamicSignalTypes,
 } from './input_type_packages';
 import { cleanupAssets } from './remove';
 
@@ -1314,6 +1315,166 @@ describe('removeAssetsForInputPackagePolicy', () => {
         'logs'
       );
       expect(res).toEqual(true);
+    });
+  });
+});
+
+describe('hasDynamicSignalTypes', () => {
+  it('returns false when packageInfo is undefined', () => {
+    expect(hasDynamicSignalTypes(undefined)).toBe(false);
+  });
+
+  it('returns false when package has no policy_templates', () => {
+    expect(hasDynamicSignalTypes({ name: 'pkg', version: '1.0.0' } as any)).toBe(false);
+  });
+
+  describe('input-type packages', () => {
+    it('returns true when input-only template has otelcol input with dynamic_signal_types: true', () => {
+      const packageInfo = {
+        type: 'input',
+        name: 'otel',
+        version: '1.0.0',
+        policy_templates: [
+          { name: 'otel', type: 'metrics', input: 'otelcol', dynamic_signal_types: true },
+        ],
+      } as any;
+      expect(hasDynamicSignalTypes(packageInfo)).toBe(true);
+    });
+
+    it('returns false when input-only template has otelcol input with dynamic_signal_types: false', () => {
+      const packageInfo = {
+        type: 'input',
+        name: 'otel',
+        version: '1.0.0',
+        policy_templates: [
+          { name: 'otel', type: 'metrics', input: 'otelcol', dynamic_signal_types: false },
+        ],
+      } as any;
+      expect(hasDynamicSignalTypes(packageInfo)).toBe(false);
+    });
+
+    it('returns false when input-only template has otelcol input without dynamic_signal_types', () => {
+      const packageInfo = {
+        type: 'input',
+        name: 'otel',
+        version: '1.0.0',
+        policy_templates: [{ name: 'otel', type: 'metrics', input: 'otelcol' }],
+      } as any;
+      expect(hasDynamicSignalTypes(packageInfo)).toBe(false);
+    });
+
+    it('returns false when input-only template does not have otelcol input', () => {
+      const packageInfo = {
+        type: 'input',
+        name: 'logs',
+        version: '1.0.0',
+        policy_templates: [
+          { name: 'logs', type: 'logs', input: 'logfile', dynamic_signal_types: true },
+        ],
+      } as any;
+      expect(hasDynamicSignalTypes(packageInfo)).toBe(false);
+    });
+  });
+
+  describe('integration-type packages', () => {
+    it('returns true when integration template has otelcol input with dynamic_signal_types: true', () => {
+      const packageInfo = {
+        type: 'integration',
+        name: 'my_integration',
+        version: '1.0.0',
+        policy_templates: [
+          {
+            name: 'my_policy',
+            title: 'My Policy',
+            description: 'My Policy',
+            inputs: [
+              { type: 'logfile', title: 'Logs', description: 'Logs' },
+              { type: 'otelcol', title: 'OTel', description: 'OTel', dynamic_signal_types: true },
+            ],
+          },
+        ],
+      } as any;
+      expect(hasDynamicSignalTypes(packageInfo)).toBe(true);
+    });
+
+    it('returns false when integration template has otelcol input with dynamic_signal_types: false', () => {
+      const packageInfo = {
+        type: 'integration',
+        name: 'my_integration',
+        version: '1.0.0',
+        policy_templates: [
+          {
+            name: 'my_policy',
+            title: 'My Policy',
+            description: 'My Policy',
+            inputs: [
+              { type: 'otelcol', title: 'OTel', description: 'OTel', dynamic_signal_types: false },
+            ],
+          },
+        ],
+      } as any;
+      expect(hasDynamicSignalTypes(packageInfo)).toBe(false);
+    });
+
+    it('returns false when integration template has otelcol input without dynamic_signal_types', () => {
+      const packageInfo = {
+        type: 'integration',
+        name: 'my_integration',
+        version: '1.0.0',
+        policy_templates: [
+          {
+            name: 'my_policy',
+            title: 'My Policy',
+            description: 'My Policy',
+            inputs: [{ type: 'otelcol', title: 'OTel', description: 'OTel' }],
+          },
+        ],
+      } as any;
+      expect(hasDynamicSignalTypes(packageInfo)).toBe(false);
+    });
+
+    it('returns false when integration template has no otelcol inputs', () => {
+      const packageInfo = {
+        type: 'integration',
+        name: 'my_integration',
+        version: '1.0.0',
+        policy_templates: [
+          {
+            name: 'my_policy',
+            title: 'My Policy',
+            description: 'My Policy',
+            inputs: [
+              { type: 'logfile', title: 'Logs', description: 'Logs', dynamic_signal_types: true },
+            ],
+          },
+        ],
+      } as any;
+      expect(hasDynamicSignalTypes(packageInfo)).toBe(false);
+    });
+
+    it('returns true when one of multiple integration templates has otelcol with dynamic_signal_types: true', () => {
+      const packageInfo = {
+        type: 'integration',
+        name: 'my_integration',
+        version: '1.0.0',
+        policy_templates: [
+          {
+            name: 'logs_policy',
+            title: 'Logs',
+            description: 'Logs',
+            inputs: [{ type: 'logfile', title: 'Logs', description: 'Logs' }],
+          },
+          {
+            name: 'otel_policy',
+            title: 'OTel',
+            description: 'OTel',
+            inputs: [
+              { type: 'otelcol', title: 'OTel', description: 'OTel', dynamic_signal_types: true },
+            ],
+          },
+        ],
+      } as any;
+      expect(hasDynamicSignalTypes(packageInfo)).toBe(true);
     });
   });
 });
