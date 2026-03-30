@@ -16,7 +16,6 @@ import type {
   PackagePolicy,
   RegistryDataStream,
 } from '../../../types';
-import type { RegistryPolicyIntegrationTemplate } from '../../../../common/types/models/epm';
 import {
   DATASET_VAR_NAME,
   DATA_STREAM_TYPE_VAR_NAME,
@@ -108,24 +107,8 @@ export const hasDynamicSignalTypes = (packageInfo?: PackageInfo): boolean => {
     return false;
   }
 
-  // Check input-only templates (type: input packages)
-  const inputOnlyTemplate = packageInfo.policy_templates?.find(
-    (template) => 'input' in template && template.input === OTEL_COLLECTOR_INPUT_TYPE
-  ) as RegistryPolicyInputOnlyTemplate | undefined;
-
-  if (inputOnlyTemplate?.dynamic_signal_types === true) {
-    return true;
-  }
-
-  // Check integration templates (type: integration packages) with otelcol in their inputs array
-  return (
-    packageInfo.policy_templates?.some(
-      (template) =>
-        !('input' in template) &&
-        (template as RegistryPolicyIntegrationTemplate).inputs?.some(
-          (input) => input.type === OTEL_COLLECTOR_INPUT_TYPE && input.dynamic_signal_types === true
-        )
-    ) ?? false
+  return (packageInfo.policy_templates ?? []).some((template) =>
+    getNormalizedInputs(template).some(registryInputAllowsDynamicSignalTypes)
   );
 };
 

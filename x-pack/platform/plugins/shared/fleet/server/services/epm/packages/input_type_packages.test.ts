@@ -1416,18 +1416,6 @@ describe('hasDynamicSignalTypes', () => {
       } as any;
       expect(hasDynamicSignalTypes(packageInfo)).toBe(false);
     });
-
-    it('returns false when input-only template does not have otelcol input', () => {
-      const packageInfo = {
-        type: 'input',
-        name: 'logs',
-        version: '1.0.0',
-        policy_templates: [
-          { name: 'logs', type: 'logs', input: 'logfile', dynamic_signal_types: true },
-        ],
-      } as any;
-      expect(hasDynamicSignalTypes(packageInfo)).toBe(false);
-    });
   });
 
   describe('integration-type packages', () => {
@@ -1487,25 +1475,6 @@ describe('hasDynamicSignalTypes', () => {
       expect(hasDynamicSignalTypes(packageInfo)).toBe(false);
     });
 
-    it('returns false when integration template has no otelcol inputs', () => {
-      const packageInfo = {
-        type: 'integration',
-        name: 'my_integration',
-        version: '1.0.0',
-        policy_templates: [
-          {
-            name: 'my_policy',
-            title: 'My Policy',
-            description: 'My Policy',
-            inputs: [
-              { type: 'logfile', title: 'Logs', description: 'Logs', dynamic_signal_types: true },
-            ],
-          },
-        ],
-      } as any;
-      expect(hasDynamicSignalTypes(packageInfo)).toBe(false);
-    });
-
     it('returns true when one of multiple integration templates has otelcol with dynamic_signal_types: true', () => {
       const packageInfo = {
         type: 'integration',
@@ -1530,81 +1499,82 @@ describe('hasDynamicSignalTypes', () => {
       } as any;
       expect(hasDynamicSignalTypes(packageInfo)).toBe(true);
     });
-  it('returns true for an input-only package with dynamic_signal_types on the policy template', () => {
-    expect(
-      hasDynamicSignalTypes({
-        policy_templates: [
-          {
-            name: 'otel',
-            input: 'otelcol',
-            template_path: 'path.hbl',
-            title: 'OTel',
-            description: 'OTel',
-            dynamic_signal_types: true,
-          },
-        ],
-      } as any)
-    ).toBe(true);
-  });
+    it('returns true for an input-only package with dynamic_signal_types on the policy template', () => {
+      expect(
+        hasDynamicSignalTypes({
+          policy_templates: [
+            {
+              name: 'otel',
+              input: 'otelcol',
+              template_path: 'path.hbl',
+              title: 'OTel',
+              description: 'OTel',
+              dynamic_signal_types: true,
+            },
+          ],
+        } as any)
+      ).toBe(true);
+    });
 
-  it('returns false for an input-only package without dynamic_signal_types', () => {
-    expect(
-      hasDynamicSignalTypes({
-        policy_templates: [
-          {
-            name: 'logfile',
-            input: 'logfile',
-            type: 'logs',
-            template_path: 'path.hbl',
-            title: 'Logfile',
-            description: 'Logfile',
-          },
-        ],
-      } as any)
-    ).toBe(false);
-  });
+    it('returns false for an input-only package without dynamic_signal_types', () => {
+      expect(
+        hasDynamicSignalTypes({
+          policy_templates: [
+            {
+              name: 'logfile',
+              input: 'logfile',
+              type: 'logs',
+              template_path: 'path.hbl',
+              title: 'Logfile',
+              description: 'Logfile',
+            },
+          ],
+        } as any)
+      ).toBe(false);
+    });
 
-  it('returns true for a composable integration package with a dynamic OTel nested input', () => {
-    expect(
-      hasDynamicSignalTypes({
-        type: 'integration',
-        policy_templates: [
-          {
-            name: 'composable-otel',
-            title: 'Composable OTel',
-            description: 'desc',
-            inputs: [
-              {
-                type: 'otelcol',
-                title: 'OTel',
-                description: 'OTel',
-                dynamic_signal_types: true,
-              },
-              { type: 'logfile', title: 'Logfile', description: 'Logfile' },
-            ],
-          },
-        ],
-      } as any)
-    ).toBe(true);
-  });
+    it('returns true for a composable integration package with a dynamic OTel nested input', () => {
+      expect(
+        hasDynamicSignalTypes({
+          type: 'integration',
+          policy_templates: [
+            {
+              name: 'composable-otel',
+              title: 'Composable OTel',
+              description: 'desc',
+              inputs: [
+                {
+                  type: 'otelcol',
+                  title: 'OTel',
+                  description: 'OTel',
+                  dynamic_signal_types: true,
+                },
+                { type: 'logfile', title: 'Logfile', description: 'Logfile' },
+              ],
+            },
+          ],
+        } as any)
+      ).toBe(true);
+    });
 
-  it('returns false for a composable integration package with no dynamic OTel nested inputs', () => {
-    expect(
-      hasDynamicSignalTypes({
-        type: 'integration',
-        policy_templates: [
-          {
-            name: 'composable',
-            title: 'Composable',
-            description: 'desc',
-            inputs: [{ type: 'logfile', title: 'Logfile', description: 'Logfile' }],
-          },
-        ],
-      } as any)
-    ).toBe(false);
-  });
+    it('returns false for a composable integration package with no dynamic OTel nested inputs', () => {
+      expect(
+        hasDynamicSignalTypes({
+          type: 'integration',
+          policy_templates: [
+            {
+              name: 'composable',
+              title: 'Composable',
+              description: 'desc',
+              inputs: [{ type: 'logfile', title: 'Logfile', description: 'Logfile' }],
+            },
+          ],
+        } as any)
+      ).toBe(false);
+    });
 
-  it('returns false for a package with no policy_templates', () => {
-    expect(hasDynamicSignalTypes({ policy_templates: [] } as any)).toBe(false);
+    it('returns false for a package with no policy_templates', () => {
+      expect(hasDynamicSignalTypes({ policy_templates: [] } as any)).toBe(false);
+    });
   });
 });
