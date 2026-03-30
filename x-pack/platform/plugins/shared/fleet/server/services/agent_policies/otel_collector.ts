@@ -23,7 +23,7 @@ import {
 import { FleetError } from '../../errors';
 import { getOutputIdForAgentPolicy } from '../../../common/services/output_helpers';
 import { pkgToPkgKey } from '../epm/registry';
-import { hasDynamicSignalTypes } from '../epm/packages/input_type_packages';
+import { packagePolicyInputAllowsUndefinedDataStreamType } from '../../../common/services';
 
 // Generate OTel Collector policy
 export function generateOtelcolConfig(
@@ -47,6 +47,19 @@ export function generateOtelcolConfig(
         packageInfo = packageInfoCache.get(pkgKey);
       }
 
+      // Check dynamic signal types for this specific input (not the whole package),
+      // using the policy_template from meta to narrow to the exact registry input definition.
+      const policyTemplateName =
+        'meta' in input
+          ? (input as FullAgentPolicyInput).meta?.package?.policy_template
+          : undefined;
+      const inputDynamicSignalTypes = packageInfo
+        ? packagePolicyInputAllowsUndefinedDataStreamType(packageInfo, {
+            type: input.type,
+            policy_template: policyTemplateName,
+          })
+        : false;
+
       const otelInputs: OTelCollectorConfig[] = (input?.streams ?? []).map((stream) => {
         // Avoid dots in keys, as they can create subobjects in agent config.
         const suffix = (input.id + '-' + stream.id).replaceAll('.', '-');
@@ -69,7 +82,7 @@ export function generateOtelcolConfig(
           stream.data_stream.dataset,
           namespace,
           suffix,
-          packageInfo,
+          inputDynamicSignalTypes,
           signalTypes
         );
 
@@ -223,11 +236,9 @@ function generateOTelAttributesTransform(
   dataset: string,
   namespace: string,
   suffix: string,
-  packageInfo?: PackageInfo,
+  dynamicSignalTypes: boolean,
   signalTypes?: string[]
 ): Record<OTelCollectorComponentID, any> {
-  const dynamicSignalTypes = hasDynamicSignalTypes(packageInfo);
-
   let transformStatements: Record<string, any> = {};
 
   if (dynamicSignalTypes && signalTypes) {

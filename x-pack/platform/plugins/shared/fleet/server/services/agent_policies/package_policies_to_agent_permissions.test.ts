@@ -1321,6 +1321,108 @@ describe('storedPackagePoliciesToAgentPermissions()', () => {
         storedPackagePoliciesToAgentPermissions(packageInfoCache, 'default', packagePolicies)
       ).not.toThrow();
     });
+
+    it('grants normal data-stream permissions for a non-dynamic input even when another template in the same package has dynamic_signal_types', () => {
+      // Package has two policy templates: 'otel_policy' (dynamic) and 'logfile_policy' (non-dynamic).
+      // A package policy using 'logfile_policy' should get regular per-data-stream permissions,
+      // not the wildcard dynamic permissions that belong to the otelcol template.
+      const mixedPkgKey = 'mixed_multi_template_pkg-1.0.0';
+      packageInfoCache.set(mixedPkgKey, {
+        format_version: '2.7.0',
+        name: 'mixed_multi_template_pkg',
+        title: 'Mixed Multi Template Pkg',
+        version: '1.0.0',
+        type: 'integration',
+        release: 'ga',
+        policy_templates: [
+          {
+            name: 'otel_policy',
+            title: 'OTel',
+            description: 'OTel inputs',
+            inputs: [
+              {
+                type: 'otelcol',
+                title: 'OTel',
+                description: 'OTel',
+                dynamic_signal_types: true,
+              },
+            ],
+          },
+          {
+            name: 'logfile_policy',
+            title: 'Logfile',
+            description: 'Logfile inputs',
+            inputs: [{ type: 'logfile', title: 'Logfile', description: 'Logfile' }],
+          },
+        ],
+        data_streams: [
+          {
+            type: 'logs',
+            dataset: 'mixed_multi_template_pkg.app',
+            title: 'App Logs',
+            release: 'ga',
+            package: 'mixed_multi_template_pkg',
+            path: 'app',
+            streams: [],
+          },
+        ],
+        latestVersion: '1.0.0',
+        status: 'not_installed',
+        assets: { kibana: {}, elasticsearch: {} },
+      } as any);
+
+      const packagePolicies: PackagePolicy[] = [
+        {
+          id: 'policy-logfile',
+          name: 'logfile-policy',
+          namespace: 'default',
+          enabled: true,
+          package: {
+            name: 'mixed_multi_template_pkg',
+            version: '1.0.0',
+            title: 'Mixed Multi Template Pkg',
+          },
+          inputs: [
+            {
+              type: 'logfile',
+              policy_template: 'logfile_policy',
+              enabled: true,
+              streams: [
+                {
+                  id: 'stream-1',
+                  enabled: true,
+                  data_stream: {
+                    type: 'logs',
+                    dataset: 'mixed_multi_template_pkg.app',
+                  },
+                  vars: {},
+                } as any,
+              ],
+            },
+          ],
+          created_at: '',
+          updated_at: '',
+          created_by: '',
+          updated_by: '',
+          revision: 1,
+          policy_id: '',
+          policy_ids: [''],
+        },
+      ];
+
+      const permissions = storedPackagePoliciesToAgentPermissions(
+        packageInfoCache,
+        'default',
+        packagePolicies
+      );
+
+      // The logfile input is non-dynamic — should get a concrete data stream permission,
+      // NOT the wildcard logs-*-* / metrics-*-* / traces-*-* from the otelcol template.
+      expect(permissions?.['policy-logfile']?.indices).toHaveLength(1);
+      expect(permissions?.['policy-logfile']?.indices?.[0].names).toEqual([
+        'logs-mixed_multi_template_pkg.app-default',
+      ]);
+    });
   });
 });
 

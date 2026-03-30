@@ -106,7 +106,6 @@ export const hasDynamicSignalTypes = (packageInfo?: PackageInfo): boolean => {
   if (!packageInfo) {
     return false;
   }
-
   return (packageInfo.policy_templates ?? []).some((template) =>
     getNormalizedInputs(template).some(registryInputAllowsDynamicSignalTypes)
   );
