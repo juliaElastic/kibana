@@ -120,8 +120,8 @@ export function storedPackagePoliciesToAgentPermissions(
     // determined dynamically from OTel pipelines rather than from static data stream definitions.
     // We check per-input (not package-level) so that a non-dynamic input in a package that also
     // has a dynamic input template gets normal data-stream-based permissions.
-    const isDynamicInput = packagePolicy.inputs.some((input) =>
-      packagePolicyInputAllowsUndefinedDataStreamType(pkg, input)
+    const isDynamicInput = packagePolicy.inputs.some(
+      (input) => input.enabled && packagePolicyInputAllowsUndefinedDataStreamType(pkg, input)
     );
 
     const dataStreams = getNormalizedDataStreams(pkg);

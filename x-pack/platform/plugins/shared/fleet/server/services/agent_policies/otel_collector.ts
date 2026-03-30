@@ -44,7 +44,7 @@ export function generateOtelcolConfig(
           name: (input as FullAgentPolicyInput).meta?.package?.name || '',
           version: (input as FullAgentPolicyInput).meta?.package?.version || '',
         });
-        packageInfo = packageInfoCache.get(pkgKey);
+        packageInfo = packageInfoCache.get(pkgKey) ?? defaultPackageInfo;
       }
 
       // Check dynamic signal types for this specific input (not the whole package),
