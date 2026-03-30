@@ -1541,5 +1541,82 @@ describe('generateOtelcolConfig', () => {
       expect(routingProcessor).toHaveProperty('metric_statements');
       expect(routingProcessor).not.toHaveProperty('log_statements');
     });
+
+    it('uses single-type routing for an otelcol input when the same template also has a different dynamic input type', () => {
+      // Single template 'combined_policy' with two inputs:
+      //   - 'otelcol'         — no dynamic_signal_types
+      //   - 'custom_receiver' — dynamic_signal_types: true
+      // Only the 'otelcol' input is processed here; it should produce single-type routing
+      // because its own definition has no dynamic_signal_types.
+      const mixedInputsPackageInfo = {
+        type: 'integration',
+        name: 'combined_pkg',
+        version: '1.0.0',
+        policy_templates: [
+          {
+            name: 'combined_policy',
+            title: 'Combined',
+            description: 'Combined inputs',
+            inputs: [
+              {
+                type: OTEL_COLLECTOR_INPUT_TYPE,
+                title: 'OTel',
+                description: 'Standard OTel collector',
+                // No dynamic_signal_types
+              },
+              {
+                type: 'custom_receiver',
+                title: 'Custom',
+                description: 'Custom dynamic receiver',
+                dynamic_signal_types: true,
+              },
+            ],
+          },
+        ],
+      } as any;
+
+      const nonDynamicOtelInput: FullAgentPolicyInput = {
+        type: OTEL_COLLECTOR_INPUT_TYPE,
+        id: 'combined-otel',
+        name: 'combined-otel',
+        revision: 0,
+        data_stream: { namespace: 'default' },
+        use_output: 'default',
+        package_policy_id: 'combined-policy',
+        meta: {
+          package: {
+            name: 'combined_pkg',
+            version: '1.0.0',
+            policy_template: 'combined_policy',
+          },
+        },
+        streams: [
+          {
+            id: 'stream-id-1',
+            data_stream: { dataset: 'combined_pkg.metrics', type: 'metrics' },
+            service: {
+              pipelines: {
+                'metrics/otlp': { receivers: ['otlp'] },
+                'logs/otlp': { receivers: ['otlp'] },
+              },
+            },
+          },
+        ],
+      };
+
+      const cache = new Map([['combined_pkg-1.0.0', mixedInputsPackageInfo]]);
+      const result = generateOtelcolConfig([nonDynamicOtelInput], undefined, cache);
+
+      const routingKey = Object.keys(result.processors ?? {}).find((k) =>
+        k.startsWith('transform/')
+      );
+      expect(routingKey).toBeDefined();
+      const routingProcessor = result.processors?.[routingKey!];
+
+      // otelcol in this template has no dynamic_signal_types — must produce only metric_statements
+      // (from data_stream.type: metrics), not log_statements from the sibling custom_receiver input.
+      expect(routingProcessor).toHaveProperty('metric_statements');
+      expect(routingProcessor).not.toHaveProperty('log_statements');
+    });
   });
 });
