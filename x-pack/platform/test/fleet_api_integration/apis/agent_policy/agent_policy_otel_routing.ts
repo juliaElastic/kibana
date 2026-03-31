@@ -45,7 +45,9 @@ function getRoutingProcessors(
   processors: Record<string, Record<string, any>> | undefined
 ): Array<[string, Record<string, any>]> {
   if (!processors) return [];
-  return Object.entries(processors).filter(([key]) => key.endsWith('-routing'));
+  return Object.entries(processors).filter(
+    ([key]) => key.endsWith('-routing') && key.includes('otelcol-')
+  );
 }
 
 export default function (providerContext: FtrProviderContext) {
@@ -158,18 +160,19 @@ export default function (providerContext: FtrProviderContext) {
         // There must be at least one routing processor generated from the OTel template.
         expect(routingProcessors.length).to.be.greaterThan(0);
 
-        const processor = routingProcessors[0][1];
-        const statements = collectStatements(processor);
+        for (const [_, processor] of routingProcessors) {
+          const statements = collectStatements(processor);
 
-        // Must set signal type so the ES exporter can route to the correct index type.
-        expect(statements.some((s) => s.includes('data_stream.type'))).to.be(true);
-        // Must set namespace so data lands in the correct namespace.
-        expect(statements.some((s) => s.includes('data_stream.namespace'))).to.be(true);
+          // Must set signal type so the ES exporter can route to the correct index type.
+          expect(statements.some((s) => s.includes('data_stream.type'))).to.be(true);
+          // Must set namespace so data lands in the correct namespace.
+          expect(statements.some((s) => s.includes('data_stream.namespace'))).to.be(true);
 
-        // Must NOT set data_stream.dataset — routing is deferred to the ES exporter so that:
-        //   a) data with no explicit attrs lands in {signal}-generic.otel-default
-        //   b) data with explicit data_stream.* attrs is routed per those attrs
-        expect(statements.some((s) => s.includes('data_stream.dataset'))).to.be(false);
+          // Must NOT set data_stream.dataset — routing is deferred to the ES exporter so that:
+          //   a) data with no explicit attrs lands in {signal}-generic.otel-default
+          //   b) data with explicit data_stream.* attrs is routed per those attrs
+          expect(statements.some((s) => s.includes('data_stream.dataset'))).to.be(false);
+        }
       } finally {
         await deleteAgentPolicy(agentPolicyId);
       }
@@ -257,14 +260,15 @@ export default function (providerContext: FtrProviderContext) {
 
         expect(routingProcessors.length).to.be.greaterThan(0);
 
-        const processor = routingProcessors[0][1];
-        const statements = collectStatements(processor);
+        for (const [, processor] of routingProcessors) {
+          const statements = collectStatements(processor);
 
-        expect(statements.some((s) => s.includes('data_stream.type'))).to.be(true);
-        expect(statements.some((s) => s.includes('data_stream.namespace'))).to.be(true);
-        // Receiver-specific packages must retain the policy_template-based dataset.
-        expect(statements.some((s) => s.includes('data_stream.dataset'))).to.be(true);
-        expect(statements.some((s) => s.includes('"mysqld_exporter"'))).to.be(true);
+          expect(statements.some((s) => s.includes('data_stream.type'))).to.be(true);
+          expect(statements.some((s) => s.includes('data_stream.namespace'))).to.be(true);
+          // Receiver-specific packages must retain the policy_template-based dataset.
+          expect(statements.some((s) => s.includes('data_stream.dataset'))).to.be(true);
+          expect(statements.some((s) => s.includes('"mysqld_exporter"'))).to.be(true);
+        }
       } finally {
         await deleteAgentPolicy(agentPolicyId);
       }
