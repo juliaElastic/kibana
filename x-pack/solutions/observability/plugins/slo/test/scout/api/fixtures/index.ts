@@ -29,10 +29,8 @@ const apiTestWithSloServices = baseTest.extend<{}, { apiServices: SloPluginApiSe
       use: (extended: SloPluginApiServicesFixture) => Promise<void>
     ) => {
       const adminCredentials = await requestAuth.getApiKey('admin');
-      const slo = createSloLifecycleApi(
-        apiClient,
-        mergeSloApiHeaders(adminCredentials.apiKeyHeader)
-      );
+      const headers = mergeSloApiHeaders(adminCredentials.apiKeyHeader);
+      const slo = createSloLifecycleApi(apiClient, headers);
       const extendedApiServices: SloPluginApiServicesFixture = { ...apiServices, slo };
       await use(extendedApiServices);
     },
