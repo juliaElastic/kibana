@@ -68,11 +68,7 @@ describe('Fleet add agent flyout', () => {
       navigateTo(FLEET);
 
       // When enableOpAMP is on, addAgentButton lives inside a popover — open it first.
-      cy.get('body').then(($body) => {
-        if ($body.find(`[data-test-subj="${ADD_AGENT_MENU_BUTTON}"]`).length > 0) {
-          cy.getBySel(ADD_AGENT_MENU_BUTTON).click();
-        }
-      });
+      cy.getBySel(ADD_AGENT_MENU_BUTTON).click();
       cy.getBySel(ADD_AGENT_BUTTON).click();
       cy.intercept('POST', '/api/fleet/agent_policies?sys_monitoring=true').as('createAgentPolicy');
 

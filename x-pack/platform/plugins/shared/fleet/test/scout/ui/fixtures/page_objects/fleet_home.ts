@@ -43,9 +43,7 @@ export class FleetHomePage {
 
   async openAddAgentMenu() {
     const menuButton = this.getAddAgentMenuButton();
-    if ((await menuButton.count()) > 0) {
-      await menuButton.click();
-    }
+    await menuButton.click();
   }
 
   getAddFleetServerHeader() {
