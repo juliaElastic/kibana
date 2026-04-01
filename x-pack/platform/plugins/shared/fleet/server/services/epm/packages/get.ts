@@ -586,9 +586,7 @@ export async function getPackageInfo({
 
   const dependenciesWithTitles = await Promise.all(
     (packageInfo.requires?.content ?? []).map(async (dep) => {
-      const [depPkg] = await Promise.all([
-        Registry.fetchFindLatestPackageOrUndefined(dep.package).catch(() => undefined),
-      ]);
+      const depPkg = await Registry.fetchFindLatestPackageOrUndefined(dep.package);
       return {
         ...dep,
         title: depPkg && 'title' in depPkg ? depPkg.title : dep.package,

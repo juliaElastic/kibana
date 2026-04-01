@@ -1544,16 +1544,14 @@ owner: elastic`,
         assets: [],
         ...(requires ? { requires } : {}),
       } as unknown as RegistryPackage);
+    let soClient: jest.Mocked<SavedObjectsClientContract>;
 
     beforeEach(() => {
-      const soClient = savedObjectsClientMock.create();
+      soClient = savedObjectsClientMock.create();
       soClient.get.mockRejectedValue(SavedObjectsErrorHelpers.createGenericNotFoundError());
     });
 
     it('enriches dependency entries with the title from the registry', async () => {
-      const soClient = savedObjectsClientMock.create();
-      soClient.get.mockRejectedValue(SavedObjectsErrorHelpers.createGenericNotFoundError());
-
       const packageInfo = makePackageInfo({
         content: [{ package: 'dep-pkg', version: '~1.0.0' }],
       });
@@ -1587,9 +1585,6 @@ owner: elastic`,
     });
 
     it('falls back to package name as title when registry lookup fails', async () => {
-      const soClient = savedObjectsClientMock.create();
-      soClient.get.mockRejectedValue(SavedObjectsErrorHelpers.createGenericNotFoundError());
-
       const packageInfo = makePackageInfo({
         content: [{ package: 'dep-pkg', version: '~1.0.0' }],
       });
@@ -1603,7 +1598,7 @@ owner: elastic`,
 
       MockRegistry.fetchFindLatestPackageOrUndefined
         .mockResolvedValueOnce({ name: 'my-package', version: '1.0.0' } as RegistryPackage)
-        .mockRejectedValueOnce(new Error('registry unavailable'));
+        .mockResolvedValueOnce(undefined);
 
       const result = await getPackageInfo({
         savedObjectsClient: soClient,
@@ -1617,9 +1612,6 @@ owner: elastic`,
     });
 
     it('enriches multiple dependencies in parallel', async () => {
-      const soClient = savedObjectsClientMock.create();
-      soClient.get.mockRejectedValue(SavedObjectsErrorHelpers.createGenericNotFoundError());
-
       const packageInfo = makePackageInfo({
         content: [
           { package: 'dep-a', version: '~1.0.0' },
@@ -1660,9 +1652,6 @@ owner: elastic`,
     });
 
     it('leaves requires undefined when there are no dependencies', async () => {
-      const soClient = savedObjectsClientMock.create();
-      soClient.get.mockRejectedValue(SavedObjectsErrorHelpers.createGenericNotFoundError());
-
       const packageInfo = makePackageInfo();
       MockRegistry.fetchInfo.mockResolvedValue(packageInfo);
       MockRegistry.getPackage.mockResolvedValue({
