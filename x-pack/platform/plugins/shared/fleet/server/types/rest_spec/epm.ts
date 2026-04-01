@@ -661,7 +661,8 @@ export const GetDependenciesResponseSchema = schema.object({
       name: schema.string(),
       version: schema.string(),
       title: schema.string(),
-    })
+    }),
+    { maxSize: 1000 }
   ),
 });
 
