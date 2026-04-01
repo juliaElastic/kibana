@@ -633,6 +633,23 @@ export const GetStatsRequestSchema = {
   }),
 };
 
+export const GetDependenciesRequestSchema = {
+  params: schema.object({
+    pkgName: schema.string(),
+    pkgVersion: schema.string(),
+  }),
+};
+
+export const GetDependenciesResponseSchema = schema.object({
+  items: schema.arrayOf(
+    schema.object({
+      name: schema.string(),
+      version: schema.string(),
+      title: schema.string(),
+    })
+  ),
+});
+
 export const InstallPackageFromRegistryRequestSchema = {
   params: schema.object({
     pkgName: schema.string(),
