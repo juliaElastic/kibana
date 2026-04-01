@@ -613,7 +613,6 @@ describe('generateOtelcolConfig', () => {
               context: 'span',
               statements: [
                 'set(attributes["data_stream.type"], "traces")',
-                'set(attributes["data_stream.dataset"], "zipkinreceiver")',
                 'set(attributes["data_stream.namespace"], "apmtest")',
               ],
             },

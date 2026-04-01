@@ -184,7 +184,7 @@ function generateOtelTypeTransforms(
     case 'traces':
       return {
         trace_statements: [
-          { context: 'span', statements: buildDataStreamStatements('traces', dataset, namespace) },
+          { context: 'span', statements: buildDataStreamStatements('traces', null, namespace) },
           {
             context: 'spanevent',
             statements: buildDataStreamStatements('logs', null, namespace),
