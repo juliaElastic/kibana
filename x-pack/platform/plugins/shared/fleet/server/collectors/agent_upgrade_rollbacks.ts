@@ -41,7 +41,7 @@ export async function getAgentUpgradeRollbacks(
           {
             range: {
               '@timestamp': {
-                gte: 'now-24h',
+                gte: 'now-1h',
               },
             },
           },

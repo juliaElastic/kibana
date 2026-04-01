@@ -45,7 +45,7 @@ describe('getAgentUpgradeRollbacks', () => {
     expect(result).toEqual({ agent_upgrade_rollbacks: 0 });
   });
 
-  it('queries .fleet-actions with type:UPGRADE and 24h time range', async () => {
+  it('queries .fleet-actions with type:UPGRADE and 1h time range', async () => {
     const searchMock = jest.fn().mockResolvedValue({ hits: { hits: [] } });
     const esClientMock = { search: searchMock } as unknown as ElasticsearchClient;
 
@@ -57,7 +57,7 @@ describe('getAgentUpgradeRollbacks', () => {
     expect(params.query.bool.filter).toEqual(
       expect.arrayContaining([
         { term: { type: 'UPGRADE' } },
-        { range: { '@timestamp': { gte: 'now-24h' } } },
+        { range: { '@timestamp': { gte: 'now-1h' } } },
       ])
     );
   });
