@@ -561,7 +561,7 @@ export const fleetUsagesSchema: RootSchema<any> = {
     type: 'long',
     _meta: {
       description:
-        'Number of agent upgrade rollback actions (type:UPGRADE, data.rollback:true) in the last 24 hours',
+        'Number of agent upgrade rollback actions (type:UPGRADE, data.rollback:true) in the last 1 hour',
     },
   },
 };
