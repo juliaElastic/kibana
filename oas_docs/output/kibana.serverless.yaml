@@ -42762,6 +42762,7 @@ paths:
       summary: Get package dependencies
       tags:
         - Elastic Package Manager (EPM)
+      x-state: Generally available
       x-metaTags:
         - content: Kibana, Elastic Cloud Serverless
           name: product_name
