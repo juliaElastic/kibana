@@ -650,8 +650,8 @@ export const GetStatsRequestSchema = {
 
 export const GetDependenciesRequestSchema = {
   params: schema.object({
-    pkgName: schema.string(),
-    pkgVersion: schema.string(),
+    pkgName: schema.string({ meta: { description: 'Package name' } }),
+    pkgVersion: schema.string({ meta: { description: 'Package version' } }),
   }),
 };
 
