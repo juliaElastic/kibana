@@ -30,25 +30,28 @@ export async function getAgentUpgradeRollbacks(
     return DEFAULT_DATA;
   }
 
-  const res = await esClient.search<ActionDoc>({
-    index: AGENT_ACTIONS_INDEX,
-    size: SO_SEARCH_LIMIT,
-    _source: ['data.rollback'],
-    query: {
-      bool: {
-        filter: [
-          { term: { type: 'UPGRADE' } },
-          {
-            range: {
-              '@timestamp': {
-                gte: 'now-1h',
+  const res = await esClient.search<ActionDoc>(
+    {
+      index: AGENT_ACTIONS_INDEX,
+      size: SO_SEARCH_LIMIT,
+      _source: ['data.rollback'],
+      query: {
+        bool: {
+          filter: [
+            { term: { type: 'UPGRADE' } },
+            {
+              range: {
+                '@timestamp': {
+                  gte: 'now-1h',
+                },
               },
             },
-          },
-        ],
+          ],
+        },
       },
     },
-  });
+    { ignore: [404] }
+  );
 
   const count = res.hits.hits.filter((hit) => hit._source?.data?.rollback === true).length;
 
