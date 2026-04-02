@@ -319,6 +319,10 @@ export const registerRoutes = (router: FleetAuthzRouter, config: FleetConfigType
       summary: `Get package dependencies`,
       options: {
         tags: ['oas-tag:Elastic Package Manager (EPM)'],
+        availability: {
+          stability: 'stable',
+          since: '9.4.0',
+        },
       },
     })
     .addVersion(
