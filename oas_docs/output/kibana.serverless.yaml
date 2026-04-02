@@ -42686,12 +42686,14 @@ paths:
         [Required authorization] Route required privileges: integrations-read OR fleet-setup OR fleet-all.
       operationId: get-fleet-epm-packages-pkgname-pkgversion-dependencies
       parameters:
-        - in: path
+        - description: Package name
+          in: path
           name: pkgName
           required: true
           schema:
             type: string
-        - in: path
+        - description: Package version
+          in: path
           name: pkgVersion
           required: true
           schema:
