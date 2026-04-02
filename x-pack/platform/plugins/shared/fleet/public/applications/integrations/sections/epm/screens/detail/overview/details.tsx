@@ -357,7 +357,7 @@ export const Details: React.FC<Props> = memo(({ packageInfo, integrationInfo }) 
               type="info"
               content={i18n.translate('xpack.fleet.epm.dependenciesTooltip', {
                 defaultMessage:
-                  'The integration requires these dependencies that will be installed with the integration.',
+                  'The integration requires the listed dependencies. They will be installed with the integration.',
               })}
             />
           </EuiTextColor>
