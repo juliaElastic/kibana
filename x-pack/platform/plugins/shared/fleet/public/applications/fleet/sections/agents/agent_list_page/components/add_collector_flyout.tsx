@@ -195,7 +195,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
             http: {
               endpoint: `${defaultFleetServerHost}/v1/opamp`,
               headers: { Authorization: `ApiKey ${token}` },
-              tls: { insecure: true },
+              tls: { insecure_skip_verify: true },
             },
           },
           instance_uid: instanceUid.current,
