@@ -469,7 +469,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
               </p>
             </EuiText>
           )}
-          {token && defaultFleetServerHost && isFormValid ? (
+          {token && defaultFleetServerHost && esApiKey && isFormValid ? (
             <EuiCodeBlock
               isCopyable
               language="yaml"
