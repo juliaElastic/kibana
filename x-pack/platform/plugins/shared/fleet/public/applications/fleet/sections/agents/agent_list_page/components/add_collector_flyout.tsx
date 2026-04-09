@@ -135,7 +135,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
     isLoading: loading,
     error: queryError,
   } = useQuery<string | undefined, Error>({
-    queryKey: ['opampPolicyAndToken'],
+    queryKey: ['opampPolicyAndToken', spaceId],
     queryFn: () => ensurePolicyAndFetchToken(spaceId),
   });
 
@@ -353,6 +353,10 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
               label={i18n.translate('xpack.fleet.addCollectorFlyout.form.serviceNameLabel', {
                 defaultMessage: 'Service name',
               })}
+              helpText={i18n.translate('xpack.fleet.addCollectorFlyout.form.serviceNameHelpText', {
+                defaultMessage:
+                  'Identifies this collector in Elasticsearch as service.name. Auto-derived from the display name above.',
+              })}
               isInvalid={touched.serviceName && serviceName.trim() === ''}
               error={touched.serviceName && serviceName.trim() === '' ? REQUIRED_ERROR : undefined}
             >
@@ -378,7 +382,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
                 'xpack.fleet.addCollectorFlyout.form.collectorDisplayNameHelpText',
                 {
                   defaultMessage:
-                    'Per-instance identity that distinguishes this collector within the group, e.g. "prod-collector-01".',
+                    'Per-instance identity that distinguishes this collector within the group, e.g. "prod-collector-01". Defaults to HOSTNAME environment variable.',
                 }
               )}
               isInvalid={touched.collectorDisplayName && collectorDisplayName.trim() === ''}
@@ -406,7 +410,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
                 'xpack.fleet.addCollectorFlyout.form.configDescriptionHelpText',
                 {
                   defaultMessage:
-                    'Optional. A human-readable summary of what this collector does. Appears as a label on the Configs page and as a comment header in the effective config view.',
+                    'Optional. A human-readable summary of what this collector does. Appears as a comment header in the effective config view.',
                 }
               )}
             >
@@ -426,7 +430,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
               })}
               helpText={i18n.translate('xpack.fleet.addCollectorFlyout.form.tagsHelpText', {
                 defaultMessage:
-                  'Optional. Comma-separated labels, e.g. prod,west-region,k8s. Tags appear in Fleet UI filter and as resource attributes on all self-emitted metrics and logs in Elasticsearch, making them queryable via ES|QL.',
+                  'Optional. Comma-separated labels, e.g. prod,west-region,k8s. Tags appear in the Fleet view filter and as resource attributes on all self-emitted metrics and logs in Elasticsearch, making them queryable via ES|QL.',
               })}
             >
               <EuiFieldText
@@ -443,7 +447,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
               })}
               helpText={i18n.translate('xpack.fleet.addCollectorFlyout.form.environmentHelpText', {
                 defaultMessage:
-                  'Optional. Deployment tier following OTel semconv (deployment.environment.name). Appears alongside tags in Fleet UI and on self-emitted telemetry.',
+                  'Optional. Deployment tier following OTel semconv (deployment.environment.name). Appears alongside tags in the Fleet view and on self-emitted telemetry.',
               })}
             >
               <EuiFieldText
