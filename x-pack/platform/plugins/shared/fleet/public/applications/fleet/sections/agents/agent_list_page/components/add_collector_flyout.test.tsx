@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { waitFor } from '@testing-library/react';
+import { fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@kbn/react-query';
 
 import type { TestRenderer } from '../../../../../../mock';
@@ -19,6 +19,7 @@ import {
   useFleetStatus,
 } from '../../../../hooks';
 import { usePollingAgentCount } from '../../../../components';
+import { useCreateApiKeyQuery } from '../../../../../../components/agent_enrollment_flyout/hooks';
 
 import { AddCollectorFlyout } from './add_collector_flyout';
 
@@ -37,6 +38,9 @@ jest.mock('../../../../components', () => ({
   }),
   usePollingAgentCount: jest.fn(),
 }));
+jest.mock('../../../../../../components/agent_enrollment_flyout/hooks', () => ({
+  useCreateApiKeyQuery: jest.fn(),
+}));
 
 const mockedSendGetOneAgentPolicy = jest.mocked(sendGetOneAgentPolicy);
 const mockedSendCreateAgentPolicyForRq = jest.mocked(sendCreateAgentPolicyForRq);
@@ -44,6 +48,7 @@ const mockedSendGetEnrollmentAPIKeys = jest.mocked(sendGetEnrollmentAPIKeys);
 const mockedUseGetFleetServerHosts = jest.mocked(useGetFleetServerHosts);
 const mockedUsePollingAgentCount = jest.mocked(usePollingAgentCount);
 const mockedUseFleetStatus = jest.mocked(useFleetStatus);
+const mockedUseCreateApiKeyQuery = jest.mocked(useCreateApiKeyQuery);
 
 describe('AddCollectorFlyout', () => {
   let renderer: TestRenderer;
@@ -75,6 +80,10 @@ describe('AddCollectorFlyout', () => {
     } as any);
 
     mockedUseFleetStatus.mockReturnValue({ spaceId: 'default' } as any);
+    mockedUseCreateApiKeyQuery.mockReturnValue({
+      apiKey: { encoded: 'mock-es-api-key', api_key: '', id: '', name: '' },
+      isLoading: false,
+    });
   });
 
   it('uses existing OpAMP policy and renders generated configuration', async () => {
@@ -98,8 +107,8 @@ describe('AddCollectorFlyout', () => {
     });
 
     const configYaml = component.getByTestId('opampConfigYaml').textContent;
-    expect(configYaml).toContain('Authorization: ApiKey existing-token');
-    expect(configYaml).toContain('endpoint: https://fleet.example:8220/v1/opamp');
+    expect(configYaml).toContain('Authorization: "ApiKey existing-token"');
+    expect(configYaml).toContain('endpoint: "https://fleet.example:8220/v1/opamp"');
   });
 
   it('creates OpAMP policy when missing and then fetches enrollment token', async () => {
@@ -126,7 +135,7 @@ describe('AddCollectorFlyout', () => {
     });
 
     const configYaml = component.getByTestId('opampConfigYaml').textContent;
-    expect(configYaml).toContain('Authorization: ApiKey created-token');
+    expect(configYaml).toContain('Authorization: "ApiKey created-token"');
   });
 
   it('uses space-prefixed policy ID when spaceId is non-default', async () => {
@@ -151,7 +160,7 @@ describe('AddCollectorFlyout', () => {
     });
 
     const configYaml = component.getByTestId('opampConfigYaml').textContent;
-    expect(configYaml).toContain('Authorization: ApiKey space-token');
+    expect(configYaml).toContain('Authorization: "ApiKey space-token"');
   });
 
   it('creates space-prefixed policy when missing in non-default space', async () => {
@@ -180,7 +189,7 @@ describe('AddCollectorFlyout', () => {
     });
 
     const configYaml = component.getByTestId('opampConfigYaml').textContent;
-    expect(configYaml).toContain('Authorization: ApiKey space-created-token');
+    expect(configYaml).toContain('Authorization: "ApiKey space-created-token"');
   });
 
   it('renders a user-facing error when policy/token setup fails', async () => {
@@ -204,6 +213,153 @@ describe('AddCollectorFlyout', () => {
 
     await waitFor(() => {
       expect(component.getByText('setup failed')).toBeInTheDocument();
+    });
+  });
+
+  describe('form auto-derivation', () => {
+    beforeEach(() => {
+      mockedSendGetOneAgentPolicy.mockResolvedValue({
+        data: { item: { id: 'opamp' } },
+      } as any);
+      mockedSendGetEnrollmentAPIKeys.mockResolvedValue({
+        data: { items: [{ api_key: 'test-token' }] },
+      } as any);
+    });
+
+    it('auto-populates collector group and service name from group display name', async () => {
+      const component = renderFlyout();
+
+      await waitFor(() => component.getByTestId('collectorGroupDisplayNameInput'));
+
+      fireEvent.change(component.getByTestId('collectorGroupDisplayNameInput'), {
+        target: { value: 'My Collector Group 1' },
+      });
+
+      expect((component.getByTestId('collectorGroupInput') as HTMLInputElement).value).toBe(
+        'my-collector-group-1'
+      );
+      expect((component.getByTestId('serviceNameInput') as HTMLInputElement).value).toBe(
+        'my-collector-group-1'
+      );
+    });
+
+    it('manual override of collector group prevents auto-derivation on subsequent display name changes', async () => {
+      const component = renderFlyout();
+
+      await waitFor(() => component.getByTestId('collectorGroupDisplayNameInput'));
+
+      // Set initial display name
+      fireEvent.change(component.getByTestId('collectorGroupDisplayNameInput'), {
+        target: { value: 'First Group' },
+      });
+
+      // Manually override collector group
+      fireEvent.change(component.getByTestId('collectorGroupInput'), {
+        target: { value: 'my-custom-group' },
+      });
+
+      // Change display name again
+      fireEvent.change(component.getByTestId('collectorGroupDisplayNameInput'), {
+        target: { value: 'Second Group' },
+      });
+
+      // Collector group should remain the manually overridden value
+      expect((component.getByTestId('collectorGroupInput') as HTMLInputElement).value).toBe(
+        'my-custom-group'
+      );
+      // Service name should still auto-update (not overridden)
+      expect((component.getByTestId('serviceNameInput') as HTMLInputElement).value).toBe(
+        'second-group'
+      );
+    });
+
+    it('manual override of service name prevents auto-derivation on subsequent display name changes', async () => {
+      const component = renderFlyout();
+
+      await waitFor(() => component.getByTestId('collectorGroupDisplayNameInput'));
+
+      fireEvent.change(component.getByTestId('collectorGroupDisplayNameInput'), {
+        target: { value: 'First Group' },
+      });
+
+      // Manually override service name
+      fireEvent.change(component.getByTestId('serviceNameInput'), {
+        target: { value: 'my-custom-service' },
+      });
+
+      // Change display name again
+      fireEvent.change(component.getByTestId('collectorGroupDisplayNameInput'), {
+        target: { value: 'Second Group' },
+      });
+
+      // Service name should remain the manually overridden value
+      expect((component.getByTestId('serviceNameInput') as HTMLInputElement).value).toBe(
+        'my-custom-service'
+      );
+      // Collector group should still auto-update
+      expect((component.getByTestId('collectorGroupInput') as HTMLInputElement).value).toBe(
+        'second-group'
+      );
+    });
+
+    it('shows required field validation errors after blur on empty required fields', async () => {
+      const component = renderFlyout();
+
+      await waitFor(() => component.getByTestId('collectorGroupInput'));
+
+      // Clear a required field then blur to trigger validation
+      fireEvent.change(component.getByTestId('collectorGroupInput'), { target: { value: '' } });
+      fireEvent.blur(component.getByTestId('collectorGroupInput'));
+
+      await waitFor(() => {
+        expect(component.getAllByText('This field is required.').length).toBeGreaterThan(0);
+      });
+    });
+
+    it('includes form field values in the generated YAML', async () => {
+      const component = renderFlyout();
+
+      await waitFor(() => component.getByTestId('opampConfigYaml'));
+
+      fireEvent.change(component.getByTestId('collectorGroupDisplayNameInput'), {
+        target: { value: 'My Group' },
+      });
+      fireEvent.change(component.getByTestId('collectorDisplayNameInput'), {
+        target: { value: 'My Collector' },
+      });
+      fireEvent.change(component.getByTestId('environmentInput'), {
+        target: { value: 'production' },
+      });
+
+      await waitFor(() => {
+        const yaml = component.getByTestId('opampConfigYaml').textContent ?? '';
+        expect(yaml).toContain('group_name: "My Group"');
+        expect(yaml).toContain('group: "my-group"');
+        expect(yaml).toContain('name: "my-group"');
+        expect(yaml).toContain('id: "My Collector"');
+        expect(yaml).toContain('name: "production"');
+      });
+    });
+
+    it('omits optional fields from YAML when cleared', async () => {
+      const component = renderFlyout();
+
+      await waitFor(() => component.getByTestId('opampConfigYaml'));
+
+      // Clear optional fields
+      fireEvent.change(component.getByTestId('configDescriptionInput'), {
+        target: { value: '' },
+      });
+      fireEvent.change(component.getByTestId('tagsInput'), { target: { value: '' } });
+      fireEvent.change(component.getByTestId('environmentInput'), { target: { value: '' } });
+
+      await waitFor(() => {
+        const yaml = component.getByTestId('opampConfigYaml').textContent ?? '';
+        // 'config:' only appears when configDescription is filled in
+        expect(yaml).not.toContain('config:');
+        expect(yaml).not.toContain('tags:');
+        expect(yaml).not.toContain('deployment:');
+      });
     });
   });
 });

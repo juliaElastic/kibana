@@ -7,6 +7,7 @@
 import crypto from 'crypto';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useQuery } from '@kbn/react-query';
 import { i18n } from '@kbn/i18n';
 
 import { dump } from 'js-yaml';
@@ -242,6 +243,21 @@ export function useGetCreateApiKey() {
     isLoading,
     onCreateApiKey,
   };
+}
+
+export function useCreateApiKeyQuery() {
+  const { data: apiKey, isLoading } = useQuery({
+    queryKey: ['createStandaloneAgentAPIKey'],
+    queryFn: async () => {
+      const res = await sendCreateStandaloneAgentAPIKey({
+        name: crypto.randomBytes(16).toString('hex'),
+      });
+      return res.item;
+    },
+    staleTime: Infinity,
+    retry: false,
+  });
+  return { apiKey, isLoading };
 }
 
 export function useFetchFullPolicy(agentPolicy: AgentPolicy | undefined, isK8s?: K8sMode) {
