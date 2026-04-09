@@ -142,10 +142,10 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
   const error = queryError?.message ?? null;
 
   // Form state
-  const [groupDisplayName, setGroupDisplayName] = useState('My Collector Group');
-  const [collectorGroup, setCollectorGroup] = useState('my-collector-group');
+  const [groupDisplayName, setGroupDisplayName] = useState('OTel Collector Group');
+  const [collectorGroup, setCollectorGroup] = useState('otel-collector-group');
   const [collectorGroupOverridden, setCollectorGroupOverridden] = useState(false);
-  const [serviceName, setServiceName] = useState('my-collector-group');
+  const [serviceName, setServiceName] = useState('otel-collector-group');
   const [serviceNameOverridden, setServiceNameOverridden] = useState(false);
   const [collectorDisplayName, setCollectorDisplayName] = useState('${env:HOSTNAME}');
   const [configDescription, setConfigDescription] = useState('');
@@ -289,8 +289,9 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
               defaultMessage="Fill in the form with metadata and copy the generated collector config below:"
             />
           </p>
-          <EuiForm component="div">
+          <EuiForm component="div" fullWidth>
             <EuiFormRow
+              fullWidth
               label={i18n.translate('xpack.fleet.addCollectorFlyout.form.groupDisplayNameLabel', {
                 defaultMessage: 'Collector group display name',
               })}
@@ -309,6 +310,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
               }
             >
               <EuiFieldText
+                fullWidth
                 isInvalid={touched.groupDisplayName && groupDisplayName.trim() === ''}
                 value={groupDisplayName}
                 onChange={(e) => handleGroupDisplayNameChange(e.target.value)}
@@ -317,6 +319,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
               />
             </EuiFormRow>
             <EuiFormRow
+              fullWidth
               label={i18n.translate('xpack.fleet.addCollectorFlyout.form.collectorGroupLabel', {
                 defaultMessage: 'Collector group',
               })}
@@ -333,6 +336,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
               }
             >
               <EuiFieldText
+                fullWidth
                 isInvalid={touched.collectorGroup && collectorGroup.trim() === ''}
                 prepend="elastic.collector.group:"
                 value={collectorGroup}
@@ -345,6 +349,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
               />
             </EuiFormRow>
             <EuiFormRow
+              fullWidth
               label={i18n.translate('xpack.fleet.addCollectorFlyout.form.serviceNameLabel', {
                 defaultMessage: 'Service name',
               })}
@@ -352,6 +357,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
               error={touched.serviceName && serviceName.trim() === '' ? REQUIRED_ERROR : undefined}
             >
               <EuiFieldText
+                fullWidth
                 isInvalid={touched.serviceName && serviceName.trim() === ''}
                 value={serviceName}
                 onChange={(e) => {
@@ -363,6 +369,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
               />
             </EuiFormRow>
             <EuiFormRow
+              fullWidth
               label={i18n.translate(
                 'xpack.fleet.addCollectorFlyout.form.collectorDisplayNameLabel',
                 { defaultMessage: 'Collector display name' }
@@ -382,6 +389,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
               }
             >
               <EuiFieldText
+                fullWidth
                 isInvalid={touched.collectorDisplayName && collectorDisplayName.trim() === ''}
                 value={collectorDisplayName}
                 onChange={(e) => setCollectorDisplayName(e.target.value)}
@@ -390,6 +398,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
               />
             </EuiFormRow>
             <EuiFormRow
+              fullWidth
               label={i18n.translate('xpack.fleet.addCollectorFlyout.form.configDescriptionLabel', {
                 defaultMessage: 'Config description',
               })}
@@ -402,6 +411,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
               )}
             >
               <EuiTextArea
+                fullWidth
                 value={configDescription}
                 onChange={(e) => setConfigDescription(e.target.value)}
                 data-test-subj="configDescriptionInput"
@@ -410,6 +420,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
               />
             </EuiFormRow>
             <EuiFormRow
+              fullWidth
               label={i18n.translate('xpack.fleet.addCollectorFlyout.form.tagsLabel', {
                 defaultMessage: 'Tags',
               })}
@@ -419,12 +430,14 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
               })}
             >
               <EuiFieldText
+                fullWidth
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
                 data-test-subj="tagsInput"
               />
             </EuiFormRow>
             <EuiFormRow
+              fullWidth
               label={i18n.translate('xpack.fleet.addCollectorFlyout.form.environmentLabel', {
                 defaultMessage: 'Environment',
               })}
@@ -434,6 +447,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
               })}
             >
               <EuiFieldText
+                fullWidth
                 value={environment}
                 onChange={(e) => setEnvironment(e.target.value)}
                 data-test-subj="environmentInput"
