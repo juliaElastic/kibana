@@ -116,6 +116,16 @@ const REQUIRED_ERROR = i18n.translate('xpack.fleet.addCollectorFlyout.fieldRequi
   defaultMessage: 'This field is required.',
 });
 
+const SLUG_FORMAT_ERROR = i18n.translate('xpack.fleet.addCollectorFlyout.slugFormatError', {
+  defaultMessage:
+    'Must contain only lowercase letters, numbers, and hyphens, with no leading or trailing hyphens.',
+});
+
+// Validates that a value matches the slug format produced by slugify().
+function isValidSlug(value: string): boolean {
+  return /^[a-z0-9]+([a-z0-9-]*[a-z0-9])?$/.test(value);
+}
+
 const DEFAULT_ES_HOST = 'http://localhost:9200';
 
 export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps> = ({
@@ -166,11 +176,22 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
 
   const touch = (field: string) => setTouched((prev) => ({ ...prev, [field]: true }));
 
-  const isFormValid =
-    groupDisplayName.trim() !== '' &&
-    collectorGroup.trim() !== '' &&
-    serviceName.trim() !== '' &&
-    collectorDisplayName.trim() !== '';
+  type RequiredField =
+    | 'groupDisplayName'
+    | 'collectorGroup'
+    | 'serviceName'
+    | 'collectorDisplayName';
+  const fieldErrors: Partial<Record<RequiredField, string>> = {};
+  if (groupDisplayName.trim() === '') fieldErrors.groupDisplayName = REQUIRED_ERROR;
+  if (collectorGroup.trim() === '') fieldErrors.collectorGroup = REQUIRED_ERROR;
+  else if (!isValidSlug(collectorGroup)) fieldErrors.collectorGroup = SLUG_FORMAT_ERROR;
+  if (serviceName.trim() === '') fieldErrors.serviceName = REQUIRED_ERROR;
+  else if (!isValidSlug(serviceName)) fieldErrors.serviceName = SLUG_FORMAT_ERROR;
+  if (collectorDisplayName.trim() === '') fieldErrors.collectorDisplayName = REQUIRED_ERROR;
+
+  const isFormValid = Object.keys(fieldErrors).length === 0;
+  const isInvalid = (field: RequiredField) => !!(touched[field] && fieldErrors[field]);
+  const errorFor = (field: RequiredField) => (touched[field] ? fieldErrors[field] : undefined);
 
   const handleGroupDisplayNameChange = (value: string) => {
     setGroupDisplayName(value);
@@ -304,16 +325,12 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
                     'Human-readable label for this group of collectors, e.g. "Production West".',
                 }
               )}
-              isInvalid={touched.groupDisplayName && groupDisplayName.trim() === ''}
-              error={
-                touched.groupDisplayName && groupDisplayName.trim() === ''
-                  ? REQUIRED_ERROR
-                  : undefined
-              }
+              isInvalid={isInvalid('groupDisplayName')}
+              error={errorFor('groupDisplayName')}
             >
               <EuiFieldText
                 fullWidth
-                isInvalid={touched.groupDisplayName && groupDisplayName.trim() === ''}
+                isInvalid={isInvalid('groupDisplayName')}
                 value={groupDisplayName}
                 onChange={(e) => handleGroupDisplayNameChange(e.target.value)}
                 onBlur={() => touch('groupDisplayName')}
@@ -329,17 +346,15 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
                 'xpack.fleet.addCollectorFlyout.form.collectorGroupHelpText',
                 {
                   defaultMessage:
-                    'Machine-friendly key used for filtering in Fleet UI. Auto-derived from the display name above.',
+                    'Machine-friendly key used for filtering in Fleet UI. Auto-derived from the display name above. If overriding, use only lowercase letters, numbers, and hyphens.',
                 }
               )}
-              isInvalid={touched.collectorGroup && collectorGroup.trim() === ''}
-              error={
-                touched.collectorGroup && collectorGroup.trim() === '' ? REQUIRED_ERROR : undefined
-              }
+              isInvalid={isInvalid('collectorGroup')}
+              error={errorFor('collectorGroup')}
             >
               <EuiFieldText
                 fullWidth
-                isInvalid={touched.collectorGroup && collectorGroup.trim() === ''}
+                isInvalid={isInvalid('collectorGroup')}
                 prepend="elastic.collector.group:"
                 value={collectorGroup}
                 onChange={(e) => {
@@ -357,14 +372,14 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
               })}
               helpText={i18n.translate('xpack.fleet.addCollectorFlyout.form.serviceNameHelpText', {
                 defaultMessage:
-                  'Identifies this collector in Elasticsearch as service.name. Auto-derived from the display name above.',
+                  'Identifies this collector in Elasticsearch as service.name. Auto-derived from the display name above. If overriding, use only lowercase letters, numbers, and hyphens.',
               })}
-              isInvalid={touched.serviceName && serviceName.trim() === ''}
-              error={touched.serviceName && serviceName.trim() === '' ? REQUIRED_ERROR : undefined}
+              isInvalid={isInvalid('serviceName')}
+              error={errorFor('serviceName')}
             >
               <EuiFieldText
                 fullWidth
-                isInvalid={touched.serviceName && serviceName.trim() === ''}
+                isInvalid={isInvalid('serviceName')}
                 value={serviceName}
                 onChange={(e) => {
                   setServiceNameOverridden(true);
@@ -387,16 +402,12 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
                     'Per-instance identity that distinguishes this collector within the group, e.g. "prod-collector-01". Defaults to HOSTNAME environment variable.',
                 }
               )}
-              isInvalid={touched.collectorDisplayName && collectorDisplayName.trim() === ''}
-              error={
-                touched.collectorDisplayName && collectorDisplayName.trim() === ''
-                  ? REQUIRED_ERROR
-                  : undefined
-              }
+              isInvalid={isInvalid('collectorDisplayName')}
+              error={errorFor('collectorDisplayName')}
             >
               <EuiFieldText
                 fullWidth
-                isInvalid={touched.collectorDisplayName && collectorDisplayName.trim() === ''}
+                isInvalid={isInvalid('collectorDisplayName')}
                 value={collectorDisplayName}
                 onChange={(e) => setCollectorDisplayName(e.target.value)}
                 onBlur={() => touch('collectorDisplayName')}
@@ -477,10 +488,10 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
                 <p>
                   <FormattedMessage
                     id="xpack.fleet.addCollectorFlyout.apiKeyDescription"
-                    defaultMessage="Either use an existing API key and replace {apiKeyPlaceholder} in the {apiKeyField} placeholder of the config below, or click the button to generate a new one."
+                    defaultMessage="Either use an existing API key and replace {apiKeyPlaceholder} in the {apiKeyField} field of the config below, or click the button to generate a new one."
                     values={{
                       apiKeyPlaceholder: <EuiCode>{'${API_KEY}'}</EuiCode>,
-                      apiKeyField: <EuiCode>API_KEY</EuiCode>,
+                      apiKeyField: <EuiCode>api_key</EuiCode>,
                     }}
                   />
                 </p>

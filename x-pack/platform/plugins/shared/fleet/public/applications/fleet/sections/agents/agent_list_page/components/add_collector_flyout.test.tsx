@@ -218,6 +218,75 @@ describe('AddCollectorFlyout', () => {
     });
   });
 
+  describe('ES API key', () => {
+    beforeEach(() => {
+      mockedSendGetOneAgentPolicy.mockResolvedValue({
+        data: { item: { id: 'opamp' } },
+      } as any);
+      mockedSendGetEnrollmentAPIKeys.mockResolvedValue({
+        data: { items: [{ api_key: 'test-token' }] },
+      } as any);
+    });
+
+    it('shows ${API_KEY} placeholder in YAML before key is created', async () => {
+      const component = renderFlyout();
+
+      await waitFor(() => {
+        const yaml = component.getByTestId('opampConfigYaml').textContent ?? '';
+        expect(yaml).toContain('api_key: "${API_KEY}"');
+      });
+    });
+
+    it('replaces placeholder with real key once created', async () => {
+      mockedUseGetCreateApiKey.mockReturnValue({
+        apiKey: undefined,
+        apiKeyEncoded: 'my-real-es-api-key',
+        isLoading: false,
+        onCreateApiKey: jest.fn(),
+      });
+
+      const component = renderFlyout();
+
+      await waitFor(() => {
+        const yaml = component.getByTestId('opampConfigYaml').textContent ?? '';
+        expect(yaml).toContain('api_key: "my-real-es-api-key"');
+        expect(yaml).not.toContain('${API_KEY}');
+      });
+    });
+
+    it('calls onCreateApiKey when the button is clicked', async () => {
+      const onCreateApiKey = jest.fn();
+      mockedUseGetCreateApiKey.mockReturnValue({
+        apiKey: undefined,
+        apiKeyEncoded: undefined,
+        isLoading: false,
+        onCreateApiKey,
+      });
+
+      const component = renderFlyout();
+
+      await waitFor(() => component.getByTestId('opampConfigYaml'));
+
+      fireEvent.click(component.getByText('Create API key'));
+      expect(onCreateApiKey).toHaveBeenCalledTimes(1);
+    });
+
+    it('disables the Create API key button once a key exists', async () => {
+      mockedUseGetCreateApiKey.mockReturnValue({
+        apiKey: undefined,
+        apiKeyEncoded: 'existing-key',
+        isLoading: false,
+        onCreateApiKey: jest.fn(),
+      });
+
+      const component = renderFlyout();
+
+      await waitFor(() => {
+        expect(component.getByText('Create API key').closest('button')).toBeDisabled();
+      });
+    });
+  });
+
   describe('form auto-derivation', () => {
     beforeEach(() => {
       mockedSendGetOneAgentPolicy.mockResolvedValue({
@@ -302,6 +371,56 @@ describe('AddCollectorFlyout', () => {
       expect((component.getByTestId('collectorGroupInput') as HTMLInputElement).value).toBe(
         'second-group'
       );
+    });
+
+    it('shows slug format error when collector group contains invalid characters', async () => {
+      const component = renderFlyout();
+
+      await waitFor(() => component.getByTestId('collectorGroupInput'));
+
+      fireEvent.change(component.getByTestId('collectorGroupInput'), {
+        target: { value: 'My Invalid Group!' },
+      });
+      fireEvent.blur(component.getByTestId('collectorGroupInput'));
+
+      await waitFor(() => {
+        expect(
+          component.getByText(
+            'Must contain only lowercase letters, numbers, and hyphens, with no leading or trailing hyphens.'
+          )
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('shows slug format error when service name contains invalid characters', async () => {
+      const component = renderFlyout();
+
+      await waitFor(() => component.getByTestId('serviceNameInput'));
+
+      fireEvent.change(component.getByTestId('serviceNameInput'), {
+        target: { value: 'My Service Name' },
+      });
+      fireEvent.blur(component.getByTestId('serviceNameInput'));
+
+      await waitFor(() => {
+        expect(
+          component.getByText(
+            'Must contain only lowercase letters, numbers, and hyphens, with no leading or trailing hyphens.'
+          )
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('hides YAML config when a slug field has an invalid value', async () => {
+      const component = renderFlyout();
+
+      await waitFor(() => component.getByTestId('opampConfigYaml'));
+
+      fireEvent.change(component.getByTestId('collectorGroupInput'), {
+        target: { value: 'invalid value with spaces' },
+      });
+
+      expect(component.queryByTestId('opampConfigYaml')).not.toBeInTheDocument();
     });
 
     it('shows required field validation errors after blur on empty required fields', async () => {
