@@ -17,7 +17,11 @@ import {
   EuiButton,
   EuiText,
   EuiSteps,
+  EuiCode,
   EuiCodeBlock,
+  EuiFlexGroup,
+  EuiFlexItem,
+  EuiHorizontalRule,
   EuiSpacer,
   EuiLoadingSpinner,
   EuiFlyoutFooter,
@@ -41,7 +45,7 @@ import {
   useDefaultOutput,
 } from '../../../../hooks';
 import { AgentEnrollmentConfirmationStep, usePollingAgentCount } from '../../../../components';
-import { useCreateApiKeyQuery } from '../../../../../../components/agent_enrollment_flyout/hooks';
+import { useGetCreateApiKey } from '../../../../../../components/agent_enrollment_flyout/hooks';
 
 interface AddCollectorFlyoutProps {
   onClose: () => void;
@@ -57,6 +61,7 @@ function getOpAMPPolicyId(spaceId?: string) {
     : `${spaceId}-${OPAMP_POLICY_ID}`;
 }
 
+// Converts a human-readable label to a lowercase, hyphen-separated machine key, e.g. "My Group 1" → "my-group-1".
 function slugify(str: string): string {
   return str
     .toLowerCase()
@@ -111,20 +116,26 @@ const REQUIRED_ERROR = i18n.translate('xpack.fleet.addCollectorFlyout.fieldRequi
   defaultMessage: 'This field is required.',
 });
 
+const DEFAULT_ES_HOST = 'http://localhost:9200';
+
 export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps> = ({
   onClose,
   onClickViewAgents,
 }) => {
   const instanceUid = useRef(uuidv4());
 
-  const { apiKey: esApiKey } = useCreateApiKeyQuery();
+  const {
+    apiKeyEncoded: esApiKeyEncoded,
+    isLoading: isCreatingApiKey,
+    onCreateApiKey,
+  } = useGetCreateApiKey();
 
   const fleetServerHosts = useGetFleetServerHosts();
   const defaultFleetServerHost =
     fleetServerHosts.data?.items?.find((item) => item.is_default)?.host_urls?.[0] || '';
   const { spaceId } = useFleetStatus();
   const { output: defaultOutput } = useDefaultOutput();
-  const defaultEsHost = defaultOutput?.hosts?.[0] ?? 'http://localhost:9200';
+  const defaultEsHost = defaultOutput?.hosts?.[0] ?? DEFAULT_ES_HOST;
   const { enrolledAgentIds } = usePollingAgentCount(getOpAMPPolicyId(spaceId), {
     noLowerTimeLimit: true,
     pollImmediately: true,
@@ -188,6 +199,15 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
       ...(environment ? { 'deployment.environment.name': environment } : {}),
     };
 
+    const selfTelemetryOtlpExporter: Record<string, any> = {
+      exporter: {
+        otlp: {
+          protocol: 'grpc',
+          endpoint: 'http://localhost:4317',
+        },
+      },
+    };
+
     const config = {
       extensions: {
         opamp: {
@@ -214,7 +234,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
       exporters: {
         'elasticsearch/otel': {
           endpoints: [defaultEsHost],
-          api_key: esApiKey?.encoded ?? '',
+          api_key: esApiKeyEncoded ? esApiKeyEncoded : '${API_KEY}',
           mapping: { mode: 'otel' },
         },
         otlp: {
@@ -227,41 +247,23 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
         pipelines: {
           logs: { receivers: ['otlp'], exporters: ['elasticsearch/otel'] },
           metrics: { receivers: ['otlp'], exporters: ['elasticsearch/otel'] },
+          traces: { receivers: ['otlp'], exporters: ['elasticsearch/otel'] },
         },
         telemetry: {
           resource: telemetryResource,
           metrics: {
-            readers: [
-              {
-                periodic: {
-                  exporter: {
-                    otlp: {
-                      protocol: 'grpc',
-                      endpoint: 'http://localhost:4317',
-                    },
-                  },
-                },
-              },
-            ],
+            readers: [{ periodic: selfTelemetryOtlpExporter }],
           },
           logs: {
-            processors: [
-              {
-                batch: {
-                  exporter: {
-                    otlp: {
-                      protocol: 'grpc',
-                      endpoint: 'http://localhost:4317',
-                    },
-                  },
-                },
-              },
-            ],
+            processors: [{ batch: selfTelemetryOtlpExporter }],
+          },
+          traces: {
+            processors: [{ batch: selfTelemetryOtlpExporter }],
           },
         },
       },
     };
-    return dump(config, { lineWidth: -1, quotingType: '"', forceQuotes: true });
+    return dump(config, { lineWidth: -1, quotingType: '"', forceQuotes: true, noRefs: true });
   }, [
     groupDisplayName,
     collectorGroup,
@@ -273,7 +275,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
     defaultFleetServerHost,
     defaultEsHost,
     token,
-    esApiKey,
+    esApiKeyEncoded,
   ]);
 
   const steps = [
@@ -286,7 +288,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
           <p>
             <FormattedMessage
               id="xpack.fleet.addCollectorFlyout.opampConfigInstruction"
-              defaultMessage="Fill in the form with metadata and copy the generated collector config below:"
+              defaultMessage="Fill in the form with metadata and copy or download the generated collector config below:"
             />
           </p>
           <EuiForm component="div" fullWidth>
@@ -458,7 +460,7 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
               />
             </EuiFormRow>
           </EuiForm>
-          <EuiSpacer size="m" />
+          <EuiHorizontalRule />
           {!isFormValid && (
             <EuiText color="danger">
               <p>
@@ -469,15 +471,64 @@ export const AddCollectorFlyout: React.FunctionComponent<AddCollectorFlyoutProps
               </p>
             </EuiText>
           )}
-          {token && defaultFleetServerHost && esApiKey && isFormValid ? (
-            <EuiCodeBlock
-              isCopyable
-              language="yaml"
-              paddingSize="m"
-              data-test-subj="opampConfigYaml"
-            >
-              {opampConfig}
-            </EuiCodeBlock>
+          {token && defaultFleetServerHost && isFormValid ? (
+            <>
+              <EuiText>
+                <p>
+                  <FormattedMessage
+                    id="xpack.fleet.addCollectorFlyout.apiKeyDescription"
+                    defaultMessage="Either use an existing API key and replace {apiKeyPlaceholder} in the {apiKeyField} placeholder of the config below, or click the button to generate a new one."
+                    values={{
+                      apiKeyPlaceholder: <EuiCode>{'${API_KEY}'}</EuiCode>,
+                      apiKeyField: <EuiCode>API_KEY</EuiCode>,
+                    }}
+                  />
+                </p>
+              </EuiText>
+              <EuiSpacer size="s" />
+              <EuiFlexGroup gutterSize="s" responsive={false}>
+                <EuiFlexItem grow={false}>
+                  <EuiButton
+                    onClick={onCreateApiKey}
+                    isLoading={isCreatingApiKey}
+                    isDisabled={!!esApiKeyEncoded}
+                    iconType={esApiKeyEncoded ? 'check' : undefined}
+                  >
+                    <FormattedMessage
+                      id="xpack.fleet.addCollectorFlyout.createApiKeyButton"
+                      defaultMessage="Create API key"
+                    />
+                  </EuiButton>
+                </EuiFlexItem>
+                <EuiFlexItem grow={false}>
+                  <EuiButton
+                    iconType="download"
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = `data:text/x-yaml;charset=utf-8,${encodeURIComponent(
+                        opampConfig
+                      )}`;
+                      link.download = 'otel-opamp.yaml';
+                      link.click();
+                    }}
+                  >
+                    <FormattedMessage
+                      id="xpack.fleet.addCollectorFlyout.downloadConfigButton"
+                      defaultMessage="Download config"
+                    />
+                  </EuiButton>
+                </EuiFlexItem>
+              </EuiFlexGroup>
+              <EuiSpacer size="m" />
+              <EuiCodeBlock
+                isCopyable
+                language="yaml"
+                paddingSize="m"
+                data-test-subj="opampConfigYaml"
+              >
+                {opampConfig}
+              </EuiCodeBlock>
+            </>
           ) : loading ? (
             <EuiCallOut
               announceOnMount

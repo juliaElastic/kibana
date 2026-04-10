@@ -19,7 +19,7 @@ import {
   useFleetStatus,
 } from '../../../../hooks';
 import { usePollingAgentCount } from '../../../../components';
-import { useCreateApiKeyQuery } from '../../../../../../components/agent_enrollment_flyout/hooks';
+import { useGetCreateApiKey } from '../../../../../../components/agent_enrollment_flyout/hooks';
 
 import { AddCollectorFlyout } from './add_collector_flyout';
 
@@ -39,7 +39,7 @@ jest.mock('../../../../components', () => ({
   usePollingAgentCount: jest.fn(),
 }));
 jest.mock('../../../../../../components/agent_enrollment_flyout/hooks', () => ({
-  useCreateApiKeyQuery: jest.fn(),
+  useGetCreateApiKey: jest.fn(),
 }));
 
 const mockedSendGetOneAgentPolicy = jest.mocked(sendGetOneAgentPolicy);
@@ -48,7 +48,7 @@ const mockedSendGetEnrollmentAPIKeys = jest.mocked(sendGetEnrollmentAPIKeys);
 const mockedUseGetFleetServerHosts = jest.mocked(useGetFleetServerHosts);
 const mockedUsePollingAgentCount = jest.mocked(usePollingAgentCount);
 const mockedUseFleetStatus = jest.mocked(useFleetStatus);
-const mockedUseCreateApiKeyQuery = jest.mocked(useCreateApiKeyQuery);
+const mockedUseGetCreateApiKey = jest.mocked(useGetCreateApiKey);
 
 describe('AddCollectorFlyout', () => {
   let renderer: TestRenderer;
@@ -80,9 +80,11 @@ describe('AddCollectorFlyout', () => {
     } as any);
 
     mockedUseFleetStatus.mockReturnValue({ spaceId: 'default' } as any);
-    mockedUseCreateApiKeyQuery.mockReturnValue({
-      apiKey: { encoded: 'mock-es-api-key', api_key: '', id: '', name: '' },
+    mockedUseGetCreateApiKey.mockReturnValue({
+      apiKey: undefined,
+      apiKeyEncoded: undefined,
       isLoading: false,
+      onCreateApiKey: jest.fn(),
     });
   });
 
