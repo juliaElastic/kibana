@@ -89,10 +89,7 @@ export function compileTemplate(
   compiledTemplate = replaceRootLevelYamlVariables(yamlValues, compiledTemplate);
 
   try {
-    // logLevel: 'silent' suppresses the "Keys with collection values will be stringified"
-    // warning that yaml emits when compiled templates contain unresolved {{ ... }} placeholders
-    // (cloud instance-data variables). js-yaml silently coerced these to strings; preserve that.
-    const yamlFromCompiledTemplate = parse(compiledTemplate, { logLevel: 'silent' });
+    const yamlFromCompiledTemplate = parse(compiledTemplate);
 
     // Hack to keep empty string ('') values around in the end yaml because
     // `load` replaces empty strings with null
