@@ -23,7 +23,7 @@ export const AWS_REGION_OPTIONS = [
 export interface FieldMeta {
   def: RegistryVarsEntry;
   /** Undefined when the var appears under both inputs — then it always renders. */
-  transport?: string;
+  input?: string;
   isBool: boolean;
   multi: boolean;
   /** Whether the manifest marks this var as user-visible (show_user: true). */
@@ -47,20 +47,19 @@ export function resolveFieldMeta(
 ): FieldMeta | undefined {
   const vd = service.varDefs?.[fieldName];
   if (!vd) return undefined;
-  // A var scoped to exactly one *known* transport renders only when that transport is active.
+  // A var scoped to exactly one *known* input renders only when that input is active.
   // Vars shared by multiple inputs, or scoped to an unknown input (e.g. httpjson), always render.
-  const knownTransports = new Set<string>([
+  const knownInputs = new Set<string>([
     'aws-s3',
     'aws-cloudwatch',
     'httpjson',
     'cel',
     'aws/metrics',
   ]);
-  const transport =
-    vd.inputs.length === 1 && knownTransports.has(vd.inputs[0]) ? vd.inputs[0] : undefined;
+  const input = vd.inputs.length === 1 && knownInputs.has(vd.inputs[0]) ? vd.inputs[0] : undefined;
   return {
     def: vd.def,
-    transport,
+    input,
     isBool: vd.def.type === 'bool',
     multi: vd.def.multi === true || ECF_TRIGGER_VAR_NAMES.has(fieldName),
     showUser: vd.def.show_user === true,
@@ -93,19 +92,19 @@ export function toDraft(value: unknown): string {
   return value === undefined || value === null ? '' : String(value);
 }
 
-export function hasTransportChoice(service: AwsServiceMatrixEntry): boolean {
+export function hasInputChoice(service: AwsServiceMatrixEntry): boolean {
   return (service.inputs ?? []).length >= 2;
 }
 
 /** Returns the single input to check field visibility against when the flyout has no toggle. */
-export function getDefaultTransport(service: AwsServiceMatrixEntry | undefined): string | null {
+export function getDefaultInput(service: AwsServiceMatrixEntry | undefined): string | null {
   // Use the first manifest-enabled input; fall back to the first available input.
   return service?.defaultEnabledInputs?.[0] ?? service?.inputs?.[0] ?? null;
 }
 
 export function getFlyoutFields(
   service: AwsServiceMatrixEntry,
-  activeTransport: string | null
+  activeInput: string | null
 ): string[] {
   const allFields = [...(service.requiredConfig ?? []), ...(service.optionalConfig ?? [])];
   return allFields.filter((f) => {
@@ -114,7 +113,7 @@ export function getFlyoutFields(
     if (!meta.showUser) return false;
     // Bool fields are rendered as switches in their own section; exclude from text flyout fields.
     if (meta.isBool) return false;
-    if (meta.transport && activeTransport && meta.transport !== activeTransport) return false;
+    if (meta.input && activeInput && meta.input !== activeInput) return false;
     return true;
   });
 }
@@ -123,28 +122,28 @@ export const REGION_FIELD_NAMES = new Set(['region', 'region_name', 'aws_region'
 
 /** Returns true when the flyout has at least one visible field for the given service. */
 export function hasConfigurableFlyoutFields(service: AwsServiceMatrixEntry): boolean {
-  const defaultTransport = getDefaultTransport(service);
-  if (getRequiredTextFields(service, defaultTransport).length > 0) return true;
-  if (getRequiredBooleanFields(service, defaultTransport).length > 0) return true;
-  const flyoutFields = getFlyoutFields(service, defaultTransport);
-  const requiredSet = new Set(getRequiredTextFields(service, defaultTransport));
+  const defaultInput = getDefaultInput(service);
+  if (getRequiredTextFields(service, defaultInput).length > 0) return true;
+  if (getRequiredBooleanFields(service, defaultInput).length > 0) return true;
+  const flyoutFields = getFlyoutFields(service, defaultInput);
+  const requiredSet = new Set(getRequiredTextFields(service, defaultInput));
   return flyoutFields.some((f) => !REGION_FIELD_NAMES.has(f) && !requiredSet.has(f));
 }
 
 export function getRegionFieldName(
   service: AwsServiceMatrixEntry,
-  activeTransport: string | null
+  activeInput: string | null
 ): string {
   const rc = service.requiredConfig ?? [];
-  if (activeTransport === 'aws-s3' && rc.includes('region')) return 'region';
-  if (activeTransport === 'aws-cloudwatch' && rc.includes('region_name')) return 'region_name';
+  if (activeInput === 'aws-s3' && rc.includes('region')) return 'region';
+  if (activeInput === 'aws-cloudwatch' && rc.includes('region_name')) return 'region_name';
   if (rc.includes('aws_region')) return 'aws_region';
   return 'aws_region';
 }
 
 export function getRequiredTextFields(
   service: AwsServiceMatrixEntry,
-  activeTransport: string | null
+  activeInput: string | null
 ): string[] {
   return (service.requiredConfig ?? []).filter((f) => {
     const meta = resolveFieldMeta(service, f);
@@ -152,7 +151,7 @@ export function getRequiredTextFields(
     if (!meta.showUser) return false;
     if (meta.isBool) return false;
     if (REGION_FIELD_NAMES.has(f)) return false;
-    if (meta.transport && activeTransport && meta.transport !== activeTransport) return false;
+    if (meta.input && activeInput && meta.input !== activeInput) return false;
     return true;
   });
 }
@@ -170,14 +169,14 @@ export function isAdvancedVar(def: RegistryVarsEntry): boolean {
 
 export function getRequiredBooleanFields(
   service: AwsServiceMatrixEntry,
-  activeTransport: string | null
+  activeInput: string | null
 ): string[] {
   return (service.requiredConfig ?? []).filter((f) => {
     const meta = resolveFieldMeta(service, f);
     if (!meta) return false;
     if (!meta.showUser) return false;
     if (!meta.isBool) return false;
-    if (meta.transport && activeTransport && meta.transport !== activeTransport) return false;
+    if (meta.input && activeInput && meta.input !== activeInput) return false;
     return true;
   });
 }

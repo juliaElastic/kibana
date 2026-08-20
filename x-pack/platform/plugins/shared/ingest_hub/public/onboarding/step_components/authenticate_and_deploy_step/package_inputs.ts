@@ -18,11 +18,11 @@ interface PackageInputEntry {
 
 export function getRegionFieldName(
   service: AwsServiceMatrixEntry,
-  activeTransport: string | null
+  activeInput: string | null
 ): string {
   const rc = service.requiredConfig ?? [];
-  if (activeTransport === 'aws-s3' && rc.includes('region')) return 'region';
-  if (activeTransport === 'aws-cloudwatch' && rc.includes('region_name')) return 'region_name';
+  if (activeInput === 'aws-s3' && rc.includes('region')) return 'region';
+  if (activeInput === 'aws-cloudwatch' && rc.includes('region_name')) return 'region_name';
   if (rc.includes('aws_region')) return 'aws_region';
   return '';
 }
@@ -42,7 +42,7 @@ export function buildStreamVars(
       continue;
     }
     // Skip vars scoped to a different input.
-    if (meta.transport && meta.transport !== activeInput) continue;
+    if (meta.input && meta.input !== activeInput) continue;
     result[key] = toTyped(value, meta);
   }
 
@@ -52,7 +52,7 @@ export function buildStreamVars(
     if (key in result) continue;
     const meta = resolveFieldMeta(service, key);
     if (!meta) continue;
-    if (meta.transport && meta.transport !== activeInput) continue;
+    if (meta.input && meta.input !== activeInput) continue;
     const typed = toTyped(undefined, meta);
     if (meta.isBool || (typeof typed === 'string' && typed !== '')) {
       result[key] = typed;
@@ -76,7 +76,10 @@ export function buildPackageInputs(
   const inputs: Record<string, PackageInputEntry> = {};
 
   for (const service of services) {
-    const serviceVars: ServiceVars = storedServiceVars[service.id] ?? { enabledInputs: [], vars: {} };
+    const serviceVars: ServiceVars = storedServiceVars[service.id] ?? {
+      enabledInputs: [],
+      vars: {},
+    };
     // Fall back to the first manifest input when no explicit selection has been saved.
     const activeInputs =
       serviceVars.enabledInputs.length > 0
