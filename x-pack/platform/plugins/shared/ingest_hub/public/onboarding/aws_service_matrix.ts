@@ -82,6 +82,12 @@ export interface AwsServiceMatrixEntry {
   policyTemplate?: string;
   /** Whether the data stream is enabled by default when the integration is installed. Derived from the package manifest. */
   defaultEnabled: boolean;
+  /**
+   * Input types that are enabled by default (stream.enabled !== false in the manifest).
+   * Used to seed enabledInputs when a user first opens a service — inputs explicitly
+   * marked enabled:false in the manifest are excluded.
+   */
+  defaultEnabledInputs: string[];
   /** Whether this service should be shown in the AWS onboarding UI. Defaults to true. */
   showInUI: boolean;
   badge?: Badge;
@@ -98,13 +104,14 @@ export interface AwsServiceMatrixEntry {
 
 /**
  * Internal type for the static routing table.
- * signalType and defaultEnabled are derived at runtime from the Fleet package manifest.
+ * signalType, defaultEnabled, and defaultEnabledInputs are derived at runtime from the Fleet package manifest.
  */
 type AwsServiceStaticEntry = Omit<
   AwsServiceMatrixEntry,
   | 'deploymentMethods'
   | 'signalType'
   | 'defaultEnabled'
+  | 'defaultEnabledInputs'
   | 'showInUI'
   | 'optionalConfig'
   | 'name'
@@ -207,6 +214,8 @@ const AWS_SERVICES_MATRIX_RAW: AwsServiceStaticEntry[] = [
     packageName: 'aws',
     signalType: 'logs',
     ecfLogType: 'cloudtrail',
+    // Known from manifest; set statically so hasTransportChoice works before manifest loads.
+    inputs: ['aws-s3', 'aws-cloudwatch'],
   },
   // TODO otel variants should be enabled when the Data format selector is added in ingest-dev#8530
   {
@@ -275,6 +284,8 @@ const AWS_SERVICES_MATRIX_RAW: AwsServiceStaticEntry[] = [
     packageName: 'aws',
     signalType: 'logs',
     ecfLogType: 'waf',
+    // WAF only supports S3 input; no transport choice shown in flyout.
+    inputs: ['aws-s3'],
   },
   // TODO otel variants should be enabled when the Data format selector is added in ingest-dev#8530
   {
@@ -336,6 +347,7 @@ const AWS_SERVICES_MATRIX_RAW: AwsServiceStaticEntry[] = [
     packageName: 'aws',
     signalType: 'logs',
     ecfLogType: 'vpcflow',
+    inputs: ['aws-s3', 'aws-cloudwatch'],
   },
   // TODO otel variants should be enabled when the Data format selector is added in ingest-dev#8530
   {
@@ -501,6 +513,7 @@ export function buildAwsServiceMatrix(
         inputs: entry.inputs ?? [],
         showInUI: entry.showInUI ?? true,
         defaultEnabled: true,
+        defaultEnabledInputs: entry.inputs ?? [],
         badge: entry.badge ?? releaseToBadge((packageInfo as any)?.release),
       } as AwsServiceMatrixEntry;
     }
@@ -511,6 +524,7 @@ export function buildAwsServiceMatrix(
     let requiredConfig = entry.requiredConfig;
     let optionalConfig: string[] | undefined;
     let defaultEnabled = true;
+    let defaultEnabledInputs: string[] = [];
     let identityFederationSupported: boolean | undefined;
     let managedIntegrations = false;
     let pt: any;
@@ -543,11 +557,14 @@ export function buildAwsServiceMatrix(
         signalType = (ds as any).type as SignalType;
       }
 
-      const dsInputs: string[] = [
-        ...new Set(((ds as any)?.streams ?? []).map((s: any) => s.input as string) as string[]),
-      ];
+      const dsStreams: Array<{ input?: string; enabled?: boolean }> = (ds as any)?.streams ?? [];
+      const dsInputs: string[] = [...new Set(dsStreams.map((s) => s.input as string))];
       if (dsInputs.length > 0) {
         inputs = dsInputs;
+        defaultEnabledInputs = dsInputs.filter((input) => {
+          const stream = dsStreams.find((s) => s.input === input);
+          return stream?.enabled !== false;
+        });
       }
 
       // Walk streams preserving input attribution and full var definitions.
@@ -653,6 +670,7 @@ export function buildAwsServiceMatrix(
       varTypes: Object.keys(varTypes).length > 0 ? varTypes : undefined,
       varDefs: Object.keys(varDefs).length > 0 ? varDefs : undefined,
       defaultEnabled,
+      defaultEnabledInputs,
       showInUI,
       badge,
       identityFederationSupported,

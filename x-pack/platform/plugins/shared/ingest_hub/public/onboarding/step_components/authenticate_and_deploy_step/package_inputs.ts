@@ -30,36 +30,37 @@ export function getRegionFieldName(
 export function buildStreamVars(
   service: AwsServiceMatrixEntry,
   serviceVars: ServiceVars,
-  globalRegion: string
+  globalRegion: string,
+  activeInput: string
 ): Record<string, string | boolean | string[]> {
   const result: Record<string, string | boolean | string[]> = {};
 
   for (const [key, value] of Object.entries(serviceVars.vars)) {
     const meta = resolveFieldMeta(service, key);
-    if (meta) {
-      result[key] = toTyped(value, meta);
-    } else {
+    if (!meta) {
       result[key] = value;
+      continue;
     }
+    // Skip vars scoped to a different input.
+    if (meta.transport && meta.transport !== activeInput) continue;
+    result[key] = toTyped(value, meta);
   }
 
-  // Emit manifest defaults for show_user fields not explicitly set by the user.
-  // This ensures required fields with manifest defaults are sent to Fleet even when
-  // the user never opened the flyout.
+  // Emit manifest defaults for show_user fields belonging to this input not explicitly set.
   const allShowUserFields = [...(service.requiredConfig ?? []), ...(service.optionalConfig ?? [])];
   for (const key of allShowUserFields) {
     if (key in result) continue;
     const meta = resolveFieldMeta(service, key);
     if (!meta) continue;
+    if (meta.transport && meta.transport !== activeInput) continue;
     const typed = toTyped(undefined, meta);
-    // Only emit when there is an actual manifest default (non-empty string or explicit bool).
     if (meta.isBool || (typeof typed === 'string' && typed !== '')) {
       result[key] = typed;
     }
   }
 
-  // Backfill singular region field from globalRegion when not explicitly set
-  const regionField = getRegionFieldName(service, serviceVars.trigger);
+  // Backfill region from globalRegion when not explicitly set.
+  const regionField = getRegionFieldName(service, activeInput);
   if (regionField && !result[regionField] && globalRegion) {
     result[regionField] = globalRegion;
   }
@@ -75,20 +76,26 @@ export function buildPackageInputs(
   const inputs: Record<string, PackageInputEntry> = {};
 
   for (const service of services) {
-    const serviceVars: ServiceVars = storedServiceVars[service.id] ?? { trigger: null, vars: {} };
-    const defaultInput = service.inputs?.includes('aws-s3') ? 'aws-s3' : service.inputs?.[0] ?? '';
-    const inputType = serviceVars.trigger ?? defaultInput;
-    if (!inputType) continue;
+    const serviceVars: ServiceVars = storedServiceVars[service.id] ?? { enabledInputs: [], vars: {} };
+    // Fall back to the first manifest input when no explicit selection has been saved.
+    const activeInputs =
+      serviceVars.enabledInputs.length > 0
+        ? serviceVars.enabledInputs
+        : service.inputs?.slice(0, 1) ?? [];
 
-    const inputKey = service.policyTemplate ? `${service.policyTemplate}-${inputType}` : inputType;
     const streamKey = `${service.packageName}.${service.id}`;
-    const streamVars = buildStreamVars(service, serviceVars, globalRegion);
 
-    if (!inputs[inputKey]) {
-      inputs[inputKey] = { enabled: true, streams: {} };
+    for (const inputType of activeInputs) {
+      const inputKey = service.policyTemplate
+        ? `${service.policyTemplate}-${inputType}`
+        : inputType;
+      const streamVars = buildStreamVars(service, serviceVars, globalRegion, inputType);
+
+      if (!inputs[inputKey]) {
+        inputs[inputKey] = { enabled: true, streams: {} };
+      }
+      inputs[inputKey].streams[streamKey] = { enabled: true, vars: streamVars };
     }
-
-    inputs[inputKey].streams[streamKey] = { enabled: true, vars: streamVars };
   }
 
   return inputs;
