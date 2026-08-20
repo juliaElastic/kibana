@@ -49,7 +49,13 @@ export function resolveFieldMeta(
   if (!vd) return undefined;
   // A var scoped to exactly one *known* transport renders only when that transport is active.
   // Vars shared by multiple inputs, or scoped to an unknown input (e.g. httpjson), always render.
-  const knownTransports = new Set<string>(['aws-s3', 'aws-cloudwatch']);
+  const knownTransports = new Set<string>([
+    'aws-s3',
+    'aws-cloudwatch',
+    'httpjson',
+    'cel',
+    'aws/metrics',
+  ]);
   const transport =
     vd.inputs.length === 1 && knownTransports.has(vd.inputs[0]) ? vd.inputs[0] : undefined;
   return {
@@ -92,9 +98,7 @@ export function hasTransportChoice(service: AwsServiceMatrixEntry): boolean {
 }
 
 /** Returns the single input to check field visibility against when the flyout has no toggle. */
-export function getDefaultTransport(
-  service: AwsServiceMatrixEntry | undefined
-): string | null {
+export function getDefaultTransport(service: AwsServiceMatrixEntry | undefined): string | null {
   // Use the first manifest-enabled input; fall back to the first available input.
   return service?.defaultEnabledInputs?.[0] ?? service?.inputs?.[0] ?? null;
 }
