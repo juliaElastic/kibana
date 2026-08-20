@@ -48,7 +48,7 @@ export function resolveFieldMeta(
   const vd = service.varDefs?.[fieldName];
   if (!vd) return undefined;
   // A var scoped to exactly one *known* input renders only when that input is active.
-  // Vars shared by multiple inputs, or scoped to an unknown input (e.g. httpjson), always render.
+  // Vars shared by multiple inputs, or scoped to an unknown input, always render.
   const knownInputs = new Set<string>([
     'aws-s3',
     'aws-cloudwatch',
