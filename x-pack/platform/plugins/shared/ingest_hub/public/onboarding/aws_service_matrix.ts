@@ -213,8 +213,6 @@ const AWS_SERVICES_MATRIX_RAW: AwsServiceStaticEntry[] = [
     deploymentMethods: [{ method: 'ecf', preferred: true }],
     packageName: 'aws',
     ecfLogType: 'cloudtrail',
-    // Known from manifest; set statically so hasTransportChoice works before manifest loads.
-    inputs: ['aws-s3', 'aws-cloudwatch'],
   },
   // TODO otel variants should be enabled when the Data format selector is added in ingest-dev#8530
   {
@@ -281,8 +279,9 @@ const AWS_SERVICES_MATRIX_RAW: AwsServiceStaticEntry[] = [
     deploymentMethods: [{ method: 'ecf', preferred: true }],
     packageName: 'aws',
     ecfLogType: 'waf',
-    // WAF only supports S3 input; no transport choice shown in flyout.
-    inputs: ['aws-s3'],
+    // TODO: WAF only supports S3 input in ECF deployment mode
+    // if users choose Agent-based deployment, cloudwatch should become available
+    // and all package vars should be displayed
   },
   // TODO otel variants should be enabled when the Data format selector is added in ingest-dev#8530
   {
@@ -341,7 +340,6 @@ const AWS_SERVICES_MATRIX_RAW: AwsServiceStaticEntry[] = [
     deploymentMethods: [{ method: 'ecf', preferred: true }],
     packageName: 'aws',
     ecfLogType: 'vpcflow',
-    inputs: ['aws-s3', 'aws-cloudwatch'],
   },
   // TODO otel variants should be enabled when the Data format selector is added in ingest-dev#8530
   {
@@ -493,7 +491,6 @@ export function buildAwsServiceMatrix(
 ): AwsServiceMatrixEntry[] {
   return staticEntries.map((entry) => {
     const { deploymentMethods: staticMethods, ...rest } = entry;
-
 
     let name = entry.name;
     let signalType = entry.signalType;
