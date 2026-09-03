@@ -1,21 +1,22 @@
 /*
  * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
 import React from 'react';
-import { OverlayStart } from 'kibana/public';
+import { CoreStart } from '@kbn/core/public';
 import { EuiFieldText, EuiModalBody, EuiButton } from '@elastic/eui';
 import { useState } from 'react';
-import { toMountPoint } from '../../../../src/plugins/kibana_react/public';
+import { toMountPoint } from '@kbn/react-kibana-mount';
 import {
   ActionExecutionContext,
   createAction,
   UiActionsStart,
-} from '../../../../src/plugins/ui_actions/public';
+} from '@kbn/ui-actions-plugin/public';
 
 export const USER_TRIGGER = 'USER_TRIGGER';
 export const COUNTRY_TRIGGER = 'COUNTRY_TRIGGER';
@@ -102,15 +103,19 @@ function EditUserModal({
   );
 }
 
-export const createEditUserAction = (getOpenModal: () => Promise<OverlayStart['openModal']>) =>
+export const createEditUserAction = (getStartServices: () => Promise<CoreStart>) =>
   createAction<UserContext>({
     id: ACTION_EDIT_USER,
     type: ACTION_EDIT_USER,
     getIconType: () => 'pencil',
     getDisplayName: () => 'Edit user',
     execute: async ({ user, update }) => {
-      const overlay = (await getOpenModal())(
-        toMountPoint(<EditUserModal user={user} update={update} close={() => overlay.close()} />)
+      const { overlays, rendering } = await getStartServices();
+      const overlay = overlays.openModal(
+        toMountPoint(
+          <EditUserModal user={user} update={update} close={() => overlay.close()} />,
+          rendering
+        )
       );
     },
   });

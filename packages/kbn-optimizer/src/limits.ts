@@ -1,17 +1,20 @@
 /*
  * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
 import Fs from 'fs';
 import Path from 'path';
 
 import dedent from 'dedent';
-import Yaml from 'js-yaml';
-import { createFailError, ToolingLog, CiStatsMetric } from '@kbn/dev-utils';
+import { parse, stringify } from 'yaml';
+import { createFailError } from '@kbn/dev-cli-errors';
+import { ToolingLog } from '@kbn/tooling-log';
+import { CiStatsMetric } from '@kbn/ci-stats-reporter';
 
 import { OptimizerConfig, Limits } from './optimizer';
 
@@ -29,7 +32,7 @@ export function readLimits(path: string): Limits {
     }
   }
 
-  return yaml ? Yaml.safeLoad(yaml) : {};
+  return yaml ? parse(yaml) ?? {} : {};
 }
 
 export function validateLimitsForAllBundles(
@@ -59,6 +62,28 @@ export function validateLimitsForAllBundles(
           ${issues.join('\n          ')}
 
         To automatically update the limits file locally run:
+
+          node scripts/build_kibana_platform_plugins.js --update-limits
+
+        To validate your changes locally run:
+
+          node scripts/build_kibana_platform_plugins.js --validate-limits
+      ` + '\n'
+    );
+  }
+
+  const sorted = limitBundleIds
+    .slice()
+    .sort((a, b) => a.localeCompare(b))
+    .every((key, i) => limitBundleIds[i] === key);
+  if (!sorted) {
+    throw createFailError(
+      dedent`
+        The limits defined in packages/kbn-optimizer/limits.yml are not sorted correctly. To make
+        sure the file is automatically updatedable without dozens of extra changes, the keys in this
+        file must be sorted.
+
+        Please sort the keys alphabetically or, to automatically update the limits file locally run:
 
           node scripts/build_kibana_platform_plugins.js --update-limits
 
@@ -111,6 +136,6 @@ export function updateBundleLimits({
     pageLoadAssetSize,
   };
 
-  Fs.writeFileSync(limitsPath, Yaml.safeDump(newLimits));
+  Fs.writeFileSync(limitsPath, stringify(newLimits));
   log.success(`wrote updated limits to ${limitsPath}`);
 }

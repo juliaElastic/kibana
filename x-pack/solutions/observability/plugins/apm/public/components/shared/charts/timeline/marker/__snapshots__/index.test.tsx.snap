@@ -1,0 +1,49 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Marker renders agent marker correctly 1`] = `
+<div>
+  <div
+    class="sc-imWYAI leNvtl"
+    style="left: 4.5px;"
+  >
+    <span
+      class="euiToolTipAnchor emotion-euiToolTipAnchor-inlineBlock"
+    >
+      <div
+        class="sc-aXZVg kATlBv"
+      >
+        <span
+          class="sc-gEvEer idDBSa"
+          color="#98a2b3"
+          shape="circle"
+        />
+      </div>
+    </span>
+  </div>
+</div>
+`;
+
+exports[`Marker renders error marker correctly 1`] = `
+<div>
+  <div
+    class="sc-imWYAI leNvtl"
+    style="left: 4.5px;"
+  >
+    <div
+      class="euiPopover emotion-euiPopover-inline-block"
+      id="popover"
+    >
+      <div
+        class="sc-aXZVg kATlBv sc-kAyceB kqPckl"
+        data-test-subj="popover"
+      >
+        <span
+          class="sc-gEvEer giNLnC"
+          color="#bd271e"
+          shape="square"
+        />
+      </div>
+    </div>
+  </div>
+</div>
+`;

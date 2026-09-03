@@ -4,6 +4,8 @@
 <titleabbrev>Delete runtime field</titleabbrev>
 ++++
 
+deprecated::[8.0.0,Use the {api-kibana}/group/endpoint-data-views[data views API]instead.]
+
 experimental[] Delete a runtime field from an index pattern.
 
 [[index-patterns-runtime-field-api-delete-request]]

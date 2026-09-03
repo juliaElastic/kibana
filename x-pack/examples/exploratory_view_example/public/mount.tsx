@@ -7,9 +7,10 @@
 
 import * as React from 'react';
 import { render, unmountComponentAtNode } from 'react-dom';
-import { CoreSetup, AppMountParameters } from 'kibana/public';
+import { CoreSetup, AppMountParameters, APP_WRAPPER_CLASS } from '@kbn/core/public';
+import { KibanaContextProvider } from '@kbn/kibana-react-plugin/public';
+import { RedirectAppLinks } from '@kbn/shared-ux-link-redirect-app';
 import { StartDependencies } from './plugin';
-
 export const mount =
   (coreSetup: CoreSetup<StartDependencies>) =>
   async ({ element }: AppMountParameters) => {
@@ -26,9 +27,19 @@ export const mount =
     const i18nCore = core.i18n;
 
     const reactElement = (
-      <i18nCore.Context>
-        <App {...deps} defaultIndexPattern={defaultIndexPattern} />
-      </i18nCore.Context>
+      <KibanaContextProvider services={{ ...coreSetup, ...core, ...plugins }}>
+        <i18nCore.Context>
+          <div className={APP_WRAPPER_CLASS}>
+            <RedirectAppLinks
+              coreStart={{
+                application: core.application,
+              }}
+            >
+              <App {...deps} defaultIndexPattern={defaultIndexPattern} />
+            </RedirectAppLinks>
+          </div>
+        </i18nCore.Context>
+      </KibanaContextProvider>
     );
     render(reactElement, element);
     return () => unmountComponentAtNode(element);

@@ -1,0 +1,6 @@
+{
+  "type": "shared-server",
+  "id": "@kbn/lock-manager",
+  "owner": ["@elastic/nightshift-context-and-research-team"],  
+  "devOnly": false
+}

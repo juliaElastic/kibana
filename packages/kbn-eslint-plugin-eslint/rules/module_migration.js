@@ -1,17 +1,20 @@
 /*
  * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
 const path = require('path');
-const KIBANA_ROOT = path.resolve(__dirname, '../../..');
+const findKibanaRoot = require('../helpers/find_kibana_root');
+const KIBANA_ROOT = findKibanaRoot();
 
 function checkModuleNameNode(context, mappings, node, desc = 'Imported') {
   const mapping = mappings.find(
-    (mapping) => mapping.from === node.value || node.value.startsWith(`${mapping.from}/`)
+    (mapping) =>
+      mapping.from === node.value || (!mapping.exact && node.value.startsWith(`${mapping.from}/`))
   );
 
   if (!mapping) {
@@ -83,6 +86,10 @@ module.exports = {
             },
             exclude: {
               type: 'array',
+            },
+            exact: {
+              type: 'boolean',
+              default: false,
             },
           },
           anyOf: [

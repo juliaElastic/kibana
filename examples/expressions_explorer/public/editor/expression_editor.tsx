@@ -1,13 +1,14 @@
 /*
  * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
 import React from 'react';
-import { EuiCodeEditor } from '@elastic/eui';
+import { CodeEditor } from '@kbn/code-editor';
 
 interface Props {
   value: string;
@@ -16,19 +17,17 @@ interface Props {
 
 export function ExpressionEditor({ value, onChange }: Props) {
   return (
-    <EuiCodeEditor
-      mode="javascript"
-      theme="github"
+    <CodeEditor
+      languageId="javascript"
       width="100%"
+      height="250px"
       value={value}
       onChange={onChange}
-      setOptions={{
-        fontSize: '14px',
-        enableBasicAutocompletion: true,
-        enableSnippets: true,
-        enableLiveAutocompletion: true,
+      options={{
+        fontSize: 14,
+        fontFamily: 'monospace',
+        quickSuggestions: true,
       }}
-      onBlur={() => {}}
       aria-label="Code Editor"
     />
   );

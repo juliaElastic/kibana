@@ -27,6 +27,9 @@ with the *date histogram*, to see count over time. The *terms* aggregation shows
 
 [float]
 === Finding your apps and objects
+// putting ID here for backwards compatibility 
+[[kibana-concepts-finding-your-apps-objects]]
+
 
 {kib} offers a <<kibana-navigation-search,global search bar>> on every page that you can use to find any app or saved object.
 Open the search bar using the keyboard shortcut Ctrl+/ on Windows and Linux, Command+/ on MacOS.
@@ -40,8 +43,6 @@ image:concepts/images/global-search.png["Global search showing matches to apps a
 {kib} requires a data view to tell it which {es} data you want to access,
 and whether the data is time-based. A data view can point to one or more {es}
 data streams, indices, or index aliases by name.
-For example, `logs-elasticsearch-prod-*` is an index pattern,
-and it is time-based with a time field of `@timestamp`. The time field is not editable.
 
 Data views are typically created by an administrator when sending data to {es}.
 You can <<data-views,create or update data views>> in *Stack Management*, or by using a script
@@ -59,17 +60,16 @@ dates, geopoints, and numbers.
 
 {kib} provides you several ways to build search queries,
 which will reduce the number of document matches that you get from {es}.
-Each app in {kib} provides a time filter, and most apps also include semi-structured search and extra filters.
+{kib} apps provide a time filter, and most apps also include semi-structured search and extra filters.
 
 [role="screenshot"]
 image:concepts/images/top-bar.png["Time filter, semi-structured search, and filters in a {kib} app"]
 
-If you frequently use any of the search options, you can click the
-save query icon
-image:concepts/images/save-icon.png["save icon"] next to the
+If you frequently use any of the search options, click
+image:concepts/images/saved-query-icon.png["save icon", width=20px] next to the
 semi-structured search to save or load a previously saved query.
-The saved query will always contain the semi-structured search query,
-and can optionally contain the time filter and extra filters.
+The saved query always contains the semi-structured search query,
+and optionally the time filter and extra filters.
 
 [float]
 ==== Time filter
@@ -79,12 +79,13 @@ In most cases, the time filter applies to the time field in the data view,
 but some apps allow you to use a different time field.
 
 Using the time filter, you can configure a refresh rate to periodically
-resubmit your searches. You can also click *Refresh* to resubmit the search.
-This might be useful if you use {kib} to monitor the underlying data.
+resubmit your searches.
 
 [role="screenshot"]
 image:concepts/images/refresh-every.png["section of time filter where you can configure a refresh rate", width=75%]
 
+To manually resubmit a search, click the *Refresh* button.
+This is useful when you use {kib} to view the underlying data.
 
 [float]
 [[semi-structured-search]]
@@ -117,11 +118,6 @@ Following are some example KQL queries.  For more detailed examples, refer to <<
 
 [float]
 [[autocomplete-suggestions]]
-==== Suggestions for autocomplete
-
-Beginning in 7.14, {kib} uses the {ref}/search-terms-enum.html[terms enum API] for autocomplete. {kib} returns results faster, but suggestions are approximate, sorted alphabetically, and can be outside the selected time range, even if `autocomplete:useTimeFilter` is enabled (as the terms enum API applies time filtering on an index-level, rather than document-level).
-
-Previously, {kib} used the {ref}/search-aggregations-bucket-terms-aggregation.html[terms aggregation API], which is slower, but suggestions included all values that matched your query, and optionally, your time range, and were sorted by popularity. To revert to using the terms aggregation API, go to <<advanced-options, Advanced Settings>>, and set `autocomplete:valueSuggestionMethod` to `terms_agg`.
 
 [float]
 ==== Additional filters with AND
@@ -129,8 +125,7 @@ Previously, {kib} used the {ref}/search-aggregations-bucket-terms-aggregation.ht
 Structured filters are a more interactive way to create {es} queries,
 and are commonly used when building dashboards that are shared by multiple analysts.
 Each filter can be disabled, inverted, or pinned across all apps.
-The structured filters are the only way to use the {es} Query DSL in JSON form,
-or to target a specific index pattern for filtering. Each of the structured
+Each of the structured
 filters is combined with AND logic on the rest of the query.
 
 [role="screenshot"]
@@ -163,8 +158,11 @@ include::data-views.asciidoc[]
 
 include::set-time-filter.asciidoc[]
 
+include::esql.asciidoc[]
+
 include::kuery.asciidoc[]
 
 include::lucene.asciidoc[]
 
 include::save-query.asciidoc[]
+

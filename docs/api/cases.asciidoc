@@ -1,0 +1,4 @@
+[[cases-api]]
+== Cases APIs
+
+For the latest details, refer to {api-kibana}/group/endpoint-cases[case APIs].

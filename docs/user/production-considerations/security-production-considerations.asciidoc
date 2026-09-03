@@ -5,8 +5,9 @@
 ++++
 <titleabbrev>Security</titleabbrev>
 ++++
-:keywords: administrator, analyst, concept, setup, security
-:description: Consider the production components for {kib} security.
+
+:frontmatter-description: Consider the production components for {kib} security.
+:frontmatter-tags-products: [kibana]
 
 To secure your {kib} installation in production, consider these high-priority topics to ensure
 that only authorized users can access {kib}.
@@ -17,7 +18,10 @@ For more information on {kib}'s security controls, see <<using-kibana-with-secur
 === Enable SSL/TLS
 
 You should use SSL/TLS encryption to ensure that traffic between browsers and the {kib} server cannot be viewed or tampered with by third
-parties. See <<configuring-tls>>.
+parties. See 
+{ref}/security-basic-setup-https.html#encrypt-kibana-http[encrypt HTTP client communications for {kib}].
+
+encrypt-kibana-http
 
 [float]
 [[configuring-kibana-shield]]

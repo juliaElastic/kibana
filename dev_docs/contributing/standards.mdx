@@ -2,7 +2,7 @@
 id: kibStandards
 slug: /kibana-dev-docs/standards
 title: Standards and guidelines
-summary: Standards and guidelines we expect every Kibana developer to abide by
+description: Standards and guidelines we expect every Kibana developer to abide by
 date: 2021-09-28
 tags: ['contributor', 'dev', 'github', 'getting started', 'onboarding', 'kibana']
 ---
@@ -14,6 +14,10 @@ We expect all developers to read and abide by our overarching <DocLink id="kibDe
 ## Style guide
 
 Please read and abide by our <DocLink id="kibStyleGuide" text="Style guide" />. The majority of these items are linted against but some are not.
+
+## Adding dependencies
+
+Please read and abide by our <DocLink id="kibThirdPartyDependencies" text="third-party dependencies guide" />.
 
 ## RESTful HTTP APIs
 
@@ -48,11 +52,12 @@ Every public API should have a release tag specified at the top of it’s docume
 #### Release tags
 
 | Type | Description | Documentation | Asciidoc Tag |
-| Undocumented | Every public API should be documented, but if it isn’t, we make no guarantees about it. These need to be eliminated and should become internal or documented. |
-| Experimental | A public API that may break or be removed at any time. | experimental[] |
-| Beta | A public API that we make a best effort not to break or remove. However, there are no guarantees. | beta[] |
-| Stable | No breaking changes outside of a Major\* | stable[] |
-| Deprecated | Do not use, will be removed. | deprecated[] |
+| -----| ------------| ------------- | ------------ |
+| Undocumented | Every public API should be documented, but if it isn’t, we make no guarantees about it. These need to be eliminated and should become internal or documented. | | |
+| Experimental | A public API that may break or be removed at any time. | experimental[] | |
+| Beta | A public API that we make a best effort not to break or remove. However, there are no guarantees. | beta[] | |
+| Stable | No breaking changes outside of a Major\* | stable[] | |
+| Deprecated | Do not use, will be removed. | deprecated[] | |
 
 \*This is likely to change with Make it Minor as we move towards a calendar based rolling deprecation and removal policy.
 
@@ -66,6 +71,14 @@ Every public API should have a release tag specified at the top of it’s docume
 ### Telemetry
 
 Every team should be collecting telemetry metrics on it’s public API usage. This will be important for knowing when it’s safe to make breaking changes. The Core team will be looking into ways to make this easier and an automatic part of registration (see [#112291](https://github.com/elastic/kibana/issues/112291)).
+
+### APM
+
+Kibana server and client are instrumented with APM node and APM RUM clients respectively, tracking several types of transactions by default, such as `page-load`, `request`, etc.
+You may introduce custom transactions. Please refer to the [APM documentation](https://www.elastic.co/guide/en/apm/get-started/current/index.html) and follow these guidelines when doing so:
+
+- Use dashed syntax for transaction types and names: `my-transaction-type` and `my-transaction-name`
+- [Refrain from adding too many custom labels](https://www.elastic.co/guide/en/apm/get-started/current/metadata.html)
 
 ### Documentation
 

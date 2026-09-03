@@ -1,13 +1,14 @@
 /*
  * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
 import dedent from 'dedent';
-import { createFailError } from '@kbn/dev-utils';
+import { createFailError } from '@kbn/dev-cli-errors';
 
 interface Options {
   packages: Array<{
@@ -17,6 +18,7 @@ interface Options {
     licenses: string[];
   }>;
   validLicenses: string[];
+  perPackageOverrides?: Record<string, string[]>;
 }
 
 /**
@@ -24,9 +26,19 @@ interface Options {
  *  options, either throws an error with details about
  *  violations or returns undefined.
  */
-export function assertLicensesValid({ packages, validLicenses }: Options) {
+export function assertLicensesValid({
+  packages,
+  validLicenses,
+  perPackageOverrides = {},
+}: Options) {
   const invalidMsgs = packages.reduce((acc, pkg) => {
-    const invalidLicenses = pkg.licenses.filter((license) => !validLicenses.includes(license));
+    const isValidLicense = (license: string) => validLicenses.includes(license);
+    const isValidLicenseForPackage = (license: string) =>
+      (perPackageOverrides[`${pkg.name}@${pkg.version}`] || []).includes(license);
+
+    const invalidLicenses = pkg.licenses.filter(
+      (license) => !isValidLicense(license) && !isValidLicenseForPackage(license)
+    );
 
     if (pkg.licenses.length && !invalidLicenses.length) {
       return acc;

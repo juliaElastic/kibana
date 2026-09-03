@@ -5,10 +5,10 @@
  * 2.0.
  */
 
-import { Plugin, CoreSetup, AppNavLinkStatus } from '../../../../src/core/public';
-import { DataPublicPluginStart } from '../../../../src/plugins/data/public';
-import { LensPublicStart } from '../../../plugins/lens/public';
-import { DeveloperExamplesSetup } from '../../../../examples/developer_examples/public';
+import { Plugin, CoreSetup } from '@kbn/core/public';
+import { DataPublicPluginStart } from '@kbn/data-plugin/public';
+import { LensPublicStart } from '@kbn/lens-plugin/public';
+import { DeveloperExamplesSetup } from '@kbn/developer-examples-plugin/public';
 import { mount } from './mount';
 
 export interface SetupDependencies {
@@ -27,7 +27,7 @@ export class EmbeddedLensExamplePlugin
     core.application.register({
       id: 'embedded_lens_example',
       title: 'Embedded Lens example',
-      navLinkStatus: AppNavLinkStatus.hidden,
+      visibleIn: [],
       mount: mount(core),
     });
 

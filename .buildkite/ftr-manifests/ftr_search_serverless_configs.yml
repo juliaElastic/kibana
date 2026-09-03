@@ -1,0 +1,9 @@
+disabled:
+  # Base config files, only necessary to inform config finding script
+  - x-pack/platform/test/serverless/api_integration/configs/search/config.group1.ts
+  - x-pack/solutions/search/test/serverless/api_integration/configs/config.feature_flags.ts
+  - x-pack/solutions/search/test/serverless/api_integration/configs/config.ts
+
+# Serverless tests only run on main
+defaultQueue: 'n2-4-spot'
+enabled:

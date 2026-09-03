@@ -1,0 +1,39 @@
+{
+  "extends": "@kbn/tsconfig-base/tsconfig.json",
+  "compilerOptions": {
+    "outDir": "target/types"
+  },
+  "include": ["common/**/*", "public/**/*", "server/**/*", "../../../../../typings/emotion.d.ts"],
+  "kbn_references": [
+    "@kbn/core",
+    "@kbn/kibana-utils-plugin",
+    "@kbn/utility-types",
+    "@kbn/i18n",
+    "@kbn/i18n-react",
+    "@kbn/config-schema",
+    "@kbn/core-custom-branding-browser",
+    "@kbn/core-saved-objects-utils-server",
+    "@kbn/react-kibana-context-theme",
+    "@kbn/core-analytics-browser",
+    "@kbn/shared-ux-error-boundary",
+    "@kbn/core-chrome-browser",
+    "@kbn/shared-ux-prompt-not-found",
+    "@kbn/react-kibana-mount",
+    "@kbn/shared-ux-tabbed-modal",
+    "@kbn/core-user-profile-browser",
+    "@kbn/datemath",
+    "@kbn/core-http-server-internal",
+    "@kbn/core-test-helpers-test-utils",
+    "@kbn/std",
+    "@kbn/core-rendering-browser",
+    "@kbn/task-manager-plugin",
+    "@kbn/logging",
+    "@kbn/core-rendering-browser",
+    "@kbn/std",
+    "@kbn/core-logging-server-mocks",
+    "@kbn/core-http-router-server-mocks",
+    "@kbn/es-query",
+    "@kbn/licensing-plugin"
+  ],
+  "exclude": ["target/**/*"]
+}

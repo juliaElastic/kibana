@@ -1,14 +1,129 @@
 [[whats-new]]
-== What's new in 8.0
+== What's new in 8.19
 
-This section summarizes the most important changes in each release. For the 
-full list, see <<release-notes>> and <<breaking-changes>>. 
+Here are the highlights of what's new and improved in 8.19.
+For detailed information about this release,
+check the <<release-notes, release notes>>.
 
-coming[8.0.0]
+Previous versions: {kibana-ref-all}/8.18/whats-new.html[8.18] | {kibana-ref-all}/8.17/whats-new.html[8.17] | {kibana-ref-all}/8.16/whats-new.html[8.16] | {kibana-ref-all}/8.15/whats-new.html[8.15] | {kibana-ref-all}/8.14/whats-new.html[8.14] | {kibana-ref-all}/8.13/whats-new.html[8.13] | {kibana-ref-all}/8.12/whats-new.html[8.12] | {kibana-ref-all}/8.11/whats-new.html[8.11] | {kibana-ref-all}/8.10/whats-new.html[8.10] | {kibana-ref-all}/8.9/whats-new.html[8.9] | {kibana-ref-all}/8.8/whats-new.html[8.8] | {kibana-ref-all}/8.7/whats-new.html[8.7] | {kibana-ref-all}/8.6/whats-new.html[8.6] | {kibana-ref-all}/8.5/whats-new.html[8.5] | {kibana-ref-all}/8.4/whats-new.html[8.4] | {kibana-ref-all}/8.3/whats-new.html[8.3] | {kibana-ref-all}/8.2/whats-new.html[8.2] | {kibana-ref-all}/8.1/whats-new.html[8.1] | {kibana-ref-all}/8.0/whats-new.html[8.0]
 
-//NOTE: The notable-highlights tagged regions are re-used in the
-//Installation and Upgrade Guide
+[discrete]
+=== Discover and ES|QL
 
-// tag::notable-highlights[]
+[discrete]
+==== Spot patterns in your logs instantly with ML-powered CATEGORIZE
 
-// end::notable-highlights[]
+You can now easily spot patterns in your logs with CATEGORIZE in ES|QL, which automatically groups recurring log patterns and surfaces meaningful insights directly in Discover.
+
+This ML-powered feature helps you detect anomalies, common error messages, and repeating behavior across large volumes of data without writing complex queries. The new table rendering presents patterns in a clear and contextual way, making it easy to scan, interpret, and act on what you see. 
+
+Whether you're troubleshooting issues or monitoring system behavior, CATEGORIZE speeds up your log analysis and gives you ML-powered insights in just a few clicks without any special setup. 
+
+image::images/categorize-esql.png[CATEGORIZE in ES|QL]
+
+
+[discrete]
+==== Smarter ES|QL suggestions, tailored to your context
+
+We've made getting started with ES|QL a whole lot easier and smarter. Building on the static Recommended Queries feature introduced in 8.16, we're now moving towards context-aware query suggestions that adapt to what you're working on. 
+
+The ES|QL editor now suggests relevant ES|QL queries based on your current solution area (like Observability or Security) and the data source you're querying. Whether you're exploring logs, building alerts, or creating dashboards, the suggestions match your task and data. 
+
+These context-aware suggestions help you write better queries faster, without needing to know the syntax upfront. 
+
+image::images/esql-smart-help.png[ES|QL smart suggestions, width=50%]
+
+[discrete]
+==== Unified Trace experience in Discover
+
+We've brought distributed tracing front and center in the new trace experience in Discover. When you open a trace or span document, you'll see key service and span attributes presented clearly, with improved formatting for duration and latency. A compact waterfall chart is now embedded right in the flyout, letting you instantly visualize trace timing and dependencies without leaving the page. You can expand the chart for a detailed view, complete with direct links to related errors and full APM context. The interface is optimized for OTel fields, supports fast filtering with ES|QL, and has been streamlined for clarity and speed. All of this makes troubleshooting complex, distributed systems in Discover faster and more intuitive than ever. 
+
+[discrete]
+=== Dashboards and Visualizations
+
+[discrete]
+==== Collapsible sections in dashboards
+
+You can now organize your dashboards into sections. These collapsible rows enable you to create fewer and more powerful dashboards by grouping relevant content. You can load dashboards faster by saving with sections collapsed, because only content that's expanded gets loaded.
+
+image::images/collapsible_sections.gif[Collapsible sections in dashboards]
+
+
+[discrete]
+==== ES|QL controls and variables, create from anywhere
+
+We've improved ES|QL variables and dashboard controls in this release. You can now create variables and controls before using them in visualizations. It's simpler to create a new control by just typing `?` in your ES|QL query, enabling you to use controls in more places. You can also substitute variables for function names, field names, field values, and ES|QL configurations all at the same time. The controls editing experience is enhanced, featuring better handling of common situations such as no data returning from a query.
+
+[discrete]
+==== Compare by trend in metric visualizations
+
+With this release, you can enable a new **Compare to** option in metric visualizations, which dynamically compares the value of the secondary metric to the primary metrics. This makes it easy for you to visually spot values that are improving. 
+
+image::images/compare_to_metric.png[Compare to metric visualization]
+
+[discrete]
+==== New visual options for Lens tables
+
+You can now render tables in Lens in **Compact** or **Expanded** mode depending on your visual preference. 
+
+[discrete]
+==== View chart configuration for read-only dashboards
+
+As a non-admin dashboard viewer, you can now view and temporarily adjust dashboard panel configuration, improving your ability to search for similar data in other places in Kibana.
+
+[discrete]
+==== Globe projection in Maps
+
+The Elastic Basemaps Service now provides an accurate globe projection when you zoom out.
+
+image::https://images.contentstack.io/v3/assets/bltefdd0b53724fa2ce/blte7a98f828a3667e2/687aa2916629b610cac5bcbf/globe_maps.gif[Maps globe projection]
+
+[discrete]
+=== Kibana Alerting and Cases
+
+[discrete]
+==== One Click Monitoring: Create Alerting rules from visualizations
+
+You no longer need to go from page to page to create alerting rules from a data point of interest in visualizations. You can now right-click on a data point from any visualization and use the newly introduced **Add alert rule** option to create an alerting rule with an ES|QL query automatically generated to tailor alerting rules with minimal manual input.
+
+This context-aware rule creation shortcut helps you improve monitoring while staying informed by data. 
+
+image::images/alerting_rules_from_visualizations.png[One Click Monitoring: Create Alerting rules from visualizations]
+
+[discrete]
+==== Alerts panel in dashboards
+
+You can now include Alerts tables as panels in dashboards. Alerts panels provide real-time visibility into system-triggered alerts alongside other visualizations. You can correlate alerts with other dashboard components, such as logs, metrics, Discover sessions, or Lens visualizations, without needing to switch contexts.
+
+image::images/alerts_panel_dashboard.png[Alerts panel in Dashboards]
+
+[discrete]
+==== Alerts history clean-up available in Technical Preview
+
+You can now manually trigger alerts deletion in bulk. This new feature starts a cleanup task that runs asynchronously in the background. You can specify a threshold for alert age or duration and choose to delete active alerts, inactive alerts, or both. This feature is currently only available under Stack Management.
+
+image::images/cleanup_alerts.png[Alerts history clean-up available in Technical Preview]
+
+[discrete]
+==== Maintenance windows public APIs
+
+Maintenance windows now have public HTTP APIs, enabling programmatic management. You can leverage these APIs to perform Create, Read, Update, and Delete (CRUD) operations on maintenance windows, giving you greater control.
+
+[discrete]
+
+
+[discrete]
+==== ES|QL rule type ungrouped alerts
+
+We're introducing an ungrouped alerts option to configure alerts for the ES|QL rule type. The ES|QL rule type now allows you to generate an alert for each row in the query results using a unique alert identifier.
+
+[discrete]
+=== Kibana Reporting
+
+[discrete]
+==== Scheduled exports
+
+Kibana's reporting feature now enables you to schedule one-time or recurring exports in PDF, PNG, and CSV formats. This allows you to easily capture and share snapshots of dashboard visualizations or Discover results. With scheduled exports, you can configure your export settings once and Kibana will automatically generate exports on a regular schedule. With proper permissions, you can also schedule exports to be shared with others through email, streamlining your export process.
+
+image::images/scheduled_exports.png[Scheduled exports, width=35%]
+  

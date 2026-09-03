@@ -1,12 +1,13 @@
 [[advanced-options]]
 == Advanced Settings
 
-*Advanced Settings* control the behavior of {kib}. For example, you can change the format used to display dates,
-specify the default index pattern, and set the precision for displayed decimal values.
+*Advanced Settings* control the behavior of {kib}. You can change the settings that apply to spaces, or to all of {kib}. For example, you can change the format used to display dates,
+specify the default data view, and apply your own branding.
 
-. Open the main menu, then click *Stack Management > Advanced Settings*.
-. Scroll or search for the setting.
-. Make your change, then click *Save changes*.
+WARNING: Changing a setting can affect {kib} performance and cause problems
+that are difficult to diagnose. Setting a property value to a blank field
+reverts to the default behavior, which might not be compatible with other
+configuration settings. Deleting a custom setting permanently removes it from {kib}.
 
 [float]
 === Required permissions
@@ -19,18 +20,20 @@ indicator is displayed:
 [role="screenshot"]
 image::images/settings-read-only-badge.png[Example of Advanced Settings Management's read only access indicator in Kibana's header]
 
-To add the privilege, open the main menu, then click *Stack Management > Roles*.
+To add the privilege, go to the *Roles* management page using the navigation menu or the <<kibana-navigation-search,global search field>>.
 
 For more information on granting access to {kib}, refer to <<xpack-security-authorization>>.
 
 [float]
 [[kibana-settings-reference]]
-=== {kib} settings reference
+=== Change the space settings
 
-WARNING: Changing a setting can affect {kib} performance and cause problems
-that are difficult to diagnose. Setting a property value to a blank field
-reverts to the default behavior, which might not be compatible with other
-configuration settings. Deleting a custom setting permanently removes it from {kib}.
+Change the settings that apply only to {kib} spaces.
+
+. Go to the *Advanced settings* page using the navigation menu or the <<kibana-navigation-search,global search field>>.
+. Click *Space Settings*.
+. Scroll or search for the setting.
+. Make your change, then click *Save changes*.
 
 [float]
 [[kibana-general-settings]]
@@ -40,14 +43,20 @@ configuration settings. Deleting a custom setting permanently removes it from {k
 [[auto-complete-use-time-tange]]`autocomplete:useTimeRange`::
 When disabled, autocompletes the suggestions from your data set instead of the time range.
 
+[[bfetch-disable]]`bfetch:disable`::
+deprecated:[8.15.0] When disabled, search requests from Kibana will be made in individual HTTP requests rather than bundled together.
+
 [[bfetch-disable-compression]]`bfetch:disableCompression`::
-When disabled, allows you to debug individual requests, but increases the response size.
+deprecated:[8.15.0] When disabled, allows you to debug individual requests, but increases the response size.
 
 [[csv-quotevalues]]`csv:quoteValues`::
 Set this property to `true` to quote exported values.
 
 [[csv-separator]]`csv:separator`::
 A string that serves as the separator for exported values.
+
+[[data_views-fields_excluded_data_tiers]]`data_views:fields_excluded_data_tiers`::
+Allows the exclusion of listed data tiers when getting a field list for faster performance.
 
 [[dateformat]]`dateFormat`::
 The format to use for displaying
@@ -89,12 +98,13 @@ Set this property to `false` to prevent the filter editor and KQL autocomplete
 from suggesting values for fields.
 
 [[autocomplete-valuesuggestionmethod]]`autocomplete:valueSuggestionMethod`::
-When set to `terms_enum`, autocomplete uses the terms enum API for value suggestions. Kibana returns results faster, but suggestions are approximate, sorted alphabetically, and can be outside the selected time range.
-When set to `terms_agg`, Kibana uses a terms aggregation for value suggestions, which is slower, but suggestions include all values that optionally match your time range and are sorted by popularity.
-<<kibana-concepts-searching-your-data, Learn more>>.
+When set to `terms_enum`, autocomplete uses the terms enum API for value suggestions. Kibana returns results faster, but suggestions are approximate, sorted alphabetically, and can be outside the selected time range. (Note that this API is incompatible with {ref}/document-level-security.html[Document-Level-Security].)
+When set to `terms_agg`, Kibana uses a terms aggregation for value suggestions, which is
+slower, but suggestions include all values that optionally match your time range and are sorted by popularity.
 
 [[autocomplete-usetimerange]]`autocomplete:useTimeRange`::
-Disable this property to get autocomplete suggestions from your full dataset, rather than from the current time range. <<kibana-concepts-searching-your-data, Learn more>>.
+Disable this property to get autocomplete suggestions from
+your full dataset, rather than from the current time range.
 
 [[filters-pinnedbydefault]]`filters:pinnedByDefault`::
 Set this property to `true` to make filters have a global state (be pinned) by
@@ -134,10 +144,6 @@ value by the maximum number of aggregations in each visualization.
 [[history-limit]]`history:limit`::
 In fields that have history, such as query inputs, show this many recent values.
 
-[[indexpattern-placeholder]]`indexPattern:placeholder`::
-The default placeholder value to use in
-*Management > Index Patterns > Create Index Pattern*.
-
 [[metafields]]`metaFields`::
 Fields that exist outside of `_source`. Kibana merges these fields into the
 document when displaying it.
@@ -149,8 +155,7 @@ Enables you to use {es} indices in *TSVB* visualizations.
 Affects the *TSVB* histogram density. Must be set higher than `histogram:maxBars`.
 
 [[query-allowleadingwildcards]]`query:allowLeadingWildcards`::
-Allows a wildcard (*) as the first character in a query clause. Only applies
-when experimental query features are enabled in the query bar. To disallow
+Allows a wildcard (*) as the first character in a query clause. To disallow
 leading wildcards in Lucene queries, use `query:queryString:options`.
 
 [[query-querystring-options]]`query:queryString:options`::
@@ -185,8 +190,10 @@ this setting stores part of the URL in your browser session to keep the URL
 short.
 
 [[theme-darkmode]]`theme:darkMode`::
-Set to `true` to enable a dark mode for the {kib} UI. You must refresh the page
-to apply the setting.
+The UI theme that the {kib} UI should use.
+Set to `enabled` or `disabled` to enable or disable the dark theme.
+Set to `system` to have the {kib} UI theme follow the system theme.
+You must refresh the page to apply the setting.
 
 [[theme-version]]`theme:version`::
 Kibana only ships with the v8 theme now, so this setting can no longer be edited.
@@ -199,14 +206,20 @@ to be displayed).
 
 [[timepicker-refreshintervaldefaults]]`timepicker:refreshIntervalDefaults`::
 The default refresh interval for the time filter. Example:
-`{ "display": "15 seconds", "pause": true, "value": 15000 }`.
+`{ "pause": true, "value": 15000 }`.
 
 [[timepicker-timedefaults]]`timepicker:timeDefaults`::
 The default selection in the time filter.
 
 [[truncate-maxheight]]`truncate:maxHeight`::
-The maximum height that a cell occupies in a table. Set to 0 to disable
+deprecated:[8.16.0]The maximum height that a cell occupies in a table. Set to 0 to disable
 truncation.
+
+[[enableESQL]]`enableESQL`::
+This setting enables ES|QL in Kibana.
+
+[[aiAssistant:preferredAIAssistantType]]`aiAssistant:preferredAIAssistantType`::
+This setting allows you to choose which AI Assistants are available to use and where. You can choose to only show the AI Assistants in their solutions, in other Kibana applications (for example, Discover, Dashboards, and Stack Management pages), or nowhere.
 
 [float]
 [[presentation-labs]]
@@ -218,7 +231,8 @@ When enabled, provides access to the experimental *Labs* features for *Canvas*.
 
 [[labs-dashboard-defer-below-fold]]`labs:dashboard:deferBelowFold`::
 When enabled, the panels that appear below the fold are loaded when they become visible on the dashboard.
-_Below the fold_ refers to panels that are not immediately visible when you open a dashboard, but become visible as you scroll. For additional information, refer to <<defer-loading-panels-below-the-fold,Improve dashboard loading time>>.
+_Below the fold_ refers to panels that are not immediately visible when you open a dashboard, but become visible as you scroll.
+//For additional information, refer to <<dashboard-troubleshooting,Improve dashboard loading time>>.
 
 [[labs-dashboard-enable-ui]]`labs:dashboard:enable_ui`::
 When enabled, provides access to the experimental *Labs* features for *Dashboard*.
@@ -264,7 +278,8 @@ the `xpack.banners.backgroundColor` configuration property.
 
 [horizontal]
 [[xpackdashboardmode-roles]]`xpackDashboardMode:roles`::
-**Deprecated. Use <<kibana-feature-privileges,feature privileges>> instead.**
+deprecated:[7.7.0]
+Deprecated; use <<kibana-feature-privileges,feature privileges>> instead.
 The roles that belong to <<xpack-dashboard-only-mode, dashboard only mode>>.
 
 [float]
@@ -283,48 +298,62 @@ value is 5.
 [[context-tiebreakerfields]]`context:tieBreakerFields`::
 A comma-separated list of fields to use for breaking a tie between documents
 that have the same timestamp value. The first field that is present and sortable
-in the current index pattern is used.
+in the current data view is used.
 
 [[defaultcolumns]]`defaultColumns`::
 The columns that appear by default on the *Discover* page. The default is
 `_source`.
 
-[[discover-samplesize]]`discover:sampleSize`::
-The number of rows to show in the *Discover* table.
-
 [[discover-max-doc-fields-displayed]]`discover:maxDocFieldsDisplayed`::
 Specifies the maximum number of fields to show in the document column of the *Discover* table.
 
 [[discover-modify-columns-on-switch]]`discover:modifyColumnsOnSwitch`::
-When enabled, removes the columns that are not in the new index pattern.
+When enabled, removes the columns that are not in the new data view.
+
+[[discover-row-height-option]]`discover:rowHeightOption`::
+The number of lines to allow in a row. A value of -1 automatically adjusts the row height to fit the contents. A value of 0 displays the content in a single line.
+
+[[discover-sampleRowsPerPage]]`discover:sampleRowsPerPage`::
+Limits the number of rows per page in the document table.
 
 [[discover-sample-size]]`discover:sampleSize`::
-Specifies the number of rows to display in the *Discover* table.
+Sets the maximum number of rows for the entire document table. This is the maximum number of documents fetched from {es}.
 
 [[discover-searchFieldsFromSource]]`discover:searchFieldsFromSource`::
+deprecated:[8.15.0]
 Load fields from the original JSON {ref}/mapping-source-field.html[`_source`].
 When disabled, *Discover* loads fields using the {es} search API's
 {ref}/search-fields.html#search-fields-param[`fields`] parameter.
 
 [[discover-searchonpageload]]`discover:searchOnPageLoad`::
 Controls whether a search is executed when *Discover* first loads. This setting
-does not have an effect when loading a saved search.
+does not have an effect when loading a saved Discover session.
+
+[[discover:showFieldStatistics]]`discover:showFieldStatistics`::
+beta[] Enables the Field statistics view. Examine details such as
+the minimum and maximum values of a numeric field or a map of a geo field.
 
 [[discover:showMultiFields]]`discover:showMultiFields`::
-When enabled, displays multi-fields in the expanded document view.
+Controls the display of multi-fields in the expanded document view.
 
 [[discover-sort-defaultorder]]`discover:sort:defaultOrder`::
-The default sort direction for time-based index patterns.
+The default sort direction for time-based data views.
 
 [[doctable-hidetimecolumn]]`doc_table:hideTimeColumn`::
-Hides the "Time" column in *Discover* and in all saved searches on dashboards.
+Hides the "Time" column in *Discover* and in all Discover session panels on dashboards.
 
 [[doctable-highlight]]`doc_table:highlight`::
-Highlights results in *Discover* and saved searches on dashboards. Highlighting
+Highlights search results in *Discover* and Discover session panels on dashboards. Highlighting
 slows requests when working on big documents.
 
 [[doctable-legacy]]`doc_table:legacy`::
-Controls the way the document table looks and works. Set this property to `true` to revert to the legacy implementation.
+deprecated:[8.15.0] Controls the way the document table looks and works.
+To use the new *Document Explorer* instead of the classic view, turn off this option.
+The *Document Explorer* offers better data sorting, resizable columns, and a full screen view.
+
+[[truncate-max-height]]`truncate:maxHeight`::
+The maximum height that a cell in a table can occupy. To disable truncation, set to 0.
+
 
 [float]
 [[kibana-ml-settings]]
@@ -349,7 +378,7 @@ must contain `from` and `to` values (see
 [horizontal]
 [[notifications-banner]]`notifications:banner`::
 A custom banner intended for temporary notices to all users. Supports
-https://help.github.com/en/articles/basic-writing-and-formatting-syntax[Markdown].
+https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax[Markdown].
 
 [[notifications-lifetime-banner]]`notifications:lifetime:banner`::
 The duration, in milliseconds, for banner notification displays. The default
@@ -372,11 +401,79 @@ value is 10000.
 ==== Observability
 
 [horizontal]
+[[observability-log-sources]]`observability:logSources`::
+Sources to use for logs data. If the data of these indices is not logs data, you can experience degraded functionality. Changes to this setting can potentially impact the sources queried in Log Threshold rules. `logs-*-*, logs-*, filebeat-*` by default.
+
 [[apm-enable-service-overview]]`apm:enableServiceOverview`::
 When enabled, displays the *Overview* tab for services in *APM*.
 
+[[apm-aws-price]]`observability:apmAWSLambdaPriceFactor`::
+Set the price per Gb-second for your AWS Lambda functions.
+
+[[apm-aws-request]]`observability:apmAWSLambdaRequestCostPerMillion`::
+Set the AWS Lambda cost per million requests.
+
+[[observability-enable-progressive-loading]]`observability:apmProgressiveLoading`::
+When enabled, uses progressive loading of some APM views.
+Data may be requested with a lower sampling rate first, with lower accuracy but faster response times,
+while the unsampled data loads in the background.
+
+[[observability-apm-max-groups]]`observability:apmServiceGroupMaxNumberOfServices`::
+Limit the number of services in a given service group.
+
+[[observability-default-service-env]]`observability:apmDefaultServiceEnvironment`::
+Set the default environment for the APM app. When left empty, data from all environments will be displayed by default.
+
+[[observability-profiling-show-error-frames]]`observability:profilingShowErrorFrames`::
+Show error frames in the Universal Profiling views to indicate stack unwinding failures.
+
+[[observability-apm-enable-table-search-bar]]`observability:apmEnableTableSearchBar`::
+beta:[] Enables faster searching in APM tables by adding a handy search bar with live filtering. Available for the following tables: Services, Transactions, and Errors.
+
+[[observability-enable-legacy-uptime-app]]`observability:enableLegacyUptimeApp`::
+Shows the Uptime app even if there is no recent Heartbeat data.
+
+[[observability-apm-enable-comparison]]`observability:enableComparisonByDefault`::
+Determines whether the comparison feature is enabled or disabled by default in the APM app.
+
+[[observability-apm-enable-infra-view]]`observability:enableInfrastructureView`::
+Enables the Infrastructure view in the APM app.
+
+[[observability-apm-enable-transaction-profiling]]`observability:apmEnableTransactionProfiling`::
+Enable Universal Profiling on Transaction view.
+
 [[observability-enable-inspect-es-queries]]`observability:enableInspectEsQueries`::
 When enabled, allows you to inspect {es} queries in API responses.
+
+[[observability-apm-enable-service-groups]]`observability:enableServiceGroups`::
+preview:[] When enabled, allows users to create Service Groups from the APM Service Inventory page.
+
+[[observability-profiling-per-vcpu-watt-x86]]`observability:profilingPervCPUWattX86`::
+The average amortized per-core power consumption (based on 100% CPU utilization) for x86 architecture.
+
+[[observability-profiling-per-vcpu-watt-arm64]]`observability:profilingPervCPUWattArm64`::
+The average amortized per-core power consumption (based on 100% CPU utilization) for arm64 architecture.
+
+[[observability-profiling-datacenter-PUE]]`observability:profilingDatacenterPUE`::
+Data center power usage effectiveness (PUE) measures how efficiently a data center uses energy. Defaults to 1.7, the average on-premise data center PUE according to the https://ela.st/uptimeinstitute[Uptime Institute] survey.
+
+[[observability-profiling-per-co2-per-kwh]]`observability:profilingCo2PerKWH`::
+Carbon intensity measures how clean your data center electricity is. Specifically, it measures the average amount of CO2 emitted per kilowatt-hour (kWh) of electricity consumed in a particular region.
+
+[[observability-profiling-aws-cost-discount-rate]]`observability:profilingAWSCostDiscountRate`::
+If you're enrolled in the AWS Enterprise Discount Program (EDP), enter your discount rate to update the profiling cost calculation.
+
+[[observability-profiling-azure-cost-discount-rate]]`observability:profilingAzureCostDiscountRate`::
+If you have an Azure Enterprise Agreement with Microsoft, enter your discount rate to update the profiling cost calculation.
+
+[[observability-profiling-cost-per-vcpu-per-hour]]`observability:profilingCostPervCPUPerHour`::
+Default Hourly Cost per CPU Core for machines not on AWS or Azure.
+
+[[gen-ai-settings-default-ai-connector]]`genAiSettings:defaultAIConnector`::
+Sets the default AI connector to power the AI Assistant and AI-driven features in Elastic. Select a generative AI connector from your available pre-configured or custom connectors. The default value is `NO_DEFAULT_CONNECTOR`. When no connector is selected, Elastic uses the Elastic Managed LLM connector when available, or the last used custom connector.
+
+[[gen-ai-settings-default-ai-connector-only]]`genAiSettings:defaultAIConnectorOnly`::
+When enabled, only the default AI connector selected in `genAiSettings:defaultAIConnector` is shown to users of this space. This restricts users from selecting other available connectors. The default value is `false`.
 
 [float]
 [[kibana-reporting-settings]]
@@ -390,9 +487,11 @@ A custom image to use in the footer of the PDF.
 [[kibana-rollups-settings]]
 ==== Rollup
 
+deprecated::[8.11.0,'Rollups are deprecated and will be removed in a future version. Use {ref}/downsampling.html[downsampling] instead.']
+
 [horizontal]
 [[rollups-enableindexpatterns]]`rollups:enableIndexPatterns`::
-Enables the creation of index patterns that capture rollup indices, which in
+deprecated:[8.15.0] Enables the creation of data views that capture rollup indices, which in
 turn enables visualizations based on rollup data. Refresh the page to apply the
 changes.
 
@@ -408,7 +507,7 @@ to use when `courier:setRequestPreference` is set to "custom".
 [[courier-ignorefilteriffieldnotinindex]]`courier:ignoreFilterIfFieldNotInIndex`::
 Skips filters that apply to fields that don't exist in the index for a
 visualization. Useful when dashboards consist of visualizations from multiple
-index patterns.
+data views.
 
 [[courier-maxconcurrentshardrequests]]`courier:maxConcurrentShardRequests`::
 Controls the {ref}/search-multi-search.html[max_concurrent_shard_requests]
@@ -426,14 +525,13 @@ because requests can be spread across all shard copies. However, results might
 be inconsistent because different shards might be in different refresh states.
 
 [[search-includefrozen]]`search:includeFrozen`::
-**This setting is deprecated and will not be supported as of 9.0.**
+deprecated:[7.16.0]
 Includes {ref}/frozen-indices.html[frozen indices] in results. Searching through
 frozen indices might increase the search time. This setting is off by default.
 Users must opt-in to include frozen indices.
 
-[[search-timeout]]`search:timeout`:: Change the maximum timeout for a search
-session or set to 0 to disable the timeout and allow queries to run to
-completion.
+[[search-timeout]]`search:timeout`:: Change the maximum timeout, in milliseconds (ms), for search requests. To disable
+the timeout and allow queries to run to completion, set to 0. The default is `600000`, or 10 minutes.
 
 [float]
 [[kibana-siem-settings]]
@@ -450,8 +548,14 @@ events.
 [[securitysolution-threatindices]]`securitySolution:defaultThreatIndex`::
 A comma-delimited list of Threat Intelligence indices from which the {security-app} collects indicators.
 
+[[securitysolution-enableCcsWarning]]`securitySolution:enableCcsWarning`:: Enables
+privilege check warnings in rules for CCS indices.
+
 [[securitysolution-enablenewsfeed]]`securitySolution:enableNewsFeed`:: Enables
 the security news feed on the Security *Overview* page.
+
+[[security-solution-exclude-cold-frozen-tiers-prevalence]]`securitySolution:excludeColdAndFrozenTiersInPrevalence`::
+Skips cold and frozen tiers in Prevalence queries when activated. Off by default.
 
 [[securitysolution-ipreputationlinks]]`securitySolution:ipReputationLinks`::
 A JSON array containing links for verifying the reputation of an IP address. The
@@ -465,7 +569,10 @@ The URL from which the security news feed content is retrieved.
 The default refresh interval for the Security time filter, in milliseconds.
 
 [[security-solution-rules-table-refresh]]`securitySolution:rulesTableRefresh`::
-The default period of time in the Security time filter.
+Enables auto refresh on the rules and monitoring tables, in milliseconds.
+
+[[securitySolution-showRelatedIntegrations]]`securitySolution:showRelatedIntegrations`::
+Shows related integrations on the rules and monitoring tables.
 
 [[securitysolution-timedefaults]]`securitySolution:timeDefaults`::
 The default period of time in the Security time filter.
@@ -480,13 +587,6 @@ The default index when using the `.es()` query.
 [[timelion-estimefield]]`timelion:es.timefield`::
 The default field containing a timestamp when using the `.es()` query.
 
-[[timelion-graphite-url]]`timelion:graphite.url`::
-experimental:[]
-Used with graphite queries, this is the URL of your graphite host
-in the form https://www.hostedgraphite.com/UID/ACCESS_KEY/graphite. This URL can
-be selected from an allow-list configured in the `kibana.yml` under
-`timelion.graphiteUrls`.
-
 [[timelion-maxbuckets]]`timelion:max_buckets`::
 The maximum number of buckets a single data source can return. This value is
 used for calculating automatic intervals in visualizations.
@@ -494,17 +594,9 @@ used for calculating automatic intervals in visualizations.
 [[timelion-mininterval]]`timelion:min_interval`::
 The smallest interval to calculate when using "auto".
 
-[[timelion-quandlkey]]`timelion:quandl.key`::
-experimental:[]
-Used with quandl queries, this is your API key from
-https://www.quandl.com/[www.quandl.com].
-
 [[timelion-targetbuckets]]`timelion:target_buckets`::
 Used for calculating automatic intervals in visualizations, this is the number
 of buckets to try to represent.
-
-[[timelion-legacyChartsLibrary]]`timelion:legacyChartsLibrary`::
-Enables the legacy charts library for timelion charts in Visualize.
 
 
 [float]
@@ -513,27 +605,55 @@ Enables the legacy charts library for timelion charts in Visualize.
 
 [horizontal]
 [[visualization-colormapping]]`visualization:colorMapping`::
-**This setting is deprecated and will not be supported as of 8.0.**
+deprecated:[7.11.0]
 Maps values to specific colors in charts using the *Compatibility* palette.
 
 [[visualization-uselegacytimeaxis]]`visualization:useLegacyTimeAxis`::
+deprecated:[8.10.0]
 Enables the legacy time axis for charts in Lens, Discover, Visualize and TSVB
 
 [[visualization-heatmap-maxbuckets]]`visualization:heatmap:maxBuckets`::
 The maximum number of buckets a datasource can return. High numbers can have a negative impact on your browser rendering performance.
 
-[[visualization-visualize-pieChartslibrary]]`visualization:visualize:legacyPieChartsLibrary`::
-The visualize editor uses new pie charts with improved performance, color palettes, label positioning, and more. Enable this option if you prefer to use to the legacy charts library.
-
-[[visualize-enablelabs]]`visualize:enableLabs`::
-Enables users to create, view, and edit experimental visualizations. When disabled,
-only production-ready visualizations are available to users.
+[[visualization-visualize-heatmapChartslibrary]]`visualization:visualize:legacyHeatmapChartsLibrary`::
+Disable this option if you prefer to use the new heatmap charts with improved performance, legend settings, and more..
 
 [float]
-[[kibana-telemetry-settings]]
-==== Usage Data
+[[kibana-global-settings-reference]]
+=== Change the global settings
+
+Change the settings that apply only to {kib} spaces.
+
+. Go to the *Advanced settings* page using the navigation menu or the <<kibana-navigation-search,global search field>>.
+. Click *Global Settings*.
+. Scroll or search for the setting.
+. Make your change, then click *Save changes*.
+
+[float]
+[[kibana-custom-branding-settings]]
+==== Custom branding
 
 [horizontal]
-[[telemetry-enabled-advanced-setting]]`telemetry:enabled`::
-When enabled, helps improve the Elastic Stack by providing usage statistics for
-basic features. This data will not be shared outside of Elastic.
+[[custom-logo]]`xpackCustomBranding:logo`::
+A custom image that appears in the header of all {kib} pages. Images must have a transparent background, and 128 x 128 pixels or smaller.
+
+[[organization-name]]`xpackCustomBranding:customizedLogo`::
+The custom text that appears in the header of all {kib} pages. Images must have a transparent background, and 200 x 84 pixels or smaller.
+
+[[page-title]]`xpackCustomBranding:pageTitle`::
+The custom text that appears on {kib} browser tabs.
+
+[[favicon-svg]]`xpackCustomBranding:faviconSVG`::
+The URL of a custom SVG image that appears on {kib} browser tabs. Images must be 16 x 16 pixels.
+
+[[favicon-png]]`xpackCustomBranding:faviconPNG`::
+The URL of a custom PNG image that appears on {kib} browser tabs.
+
+[float]
+[[kibana-usage-collection-settings]]
+==== Usage collection
+
+[[provide-usage-data]]`telemetry:enabled`::
+Enabling data usage collection (also known as Telemetry) allows us to learn
+what our users are most interested in, so we can improve our products and services.
+Refer to our https://www.elastic.co/legal/product-privacy-statement[Privacy Statement] for more details.

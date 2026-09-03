@@ -1,0 +1,9 @@
+{
+  "type": "shared-browser",
+  "id": "@kbn/custom-integrations",
+  "owner": [
+    "@elastic/obs-onboarding-team"
+  ],
+  "group": "observability",
+  "visibility": "private"
+}

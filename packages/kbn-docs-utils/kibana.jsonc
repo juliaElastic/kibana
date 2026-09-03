@@ -1,0 +1,6 @@
+{
+  "type": "shared-server",
+  "id": "@kbn/docs-utils",
+  "devOnly": true,
+  "owner": "@elastic/kibana-operations"
+}

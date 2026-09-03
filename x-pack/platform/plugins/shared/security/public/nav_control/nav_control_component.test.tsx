@@ -1,0 +1,519 @@
+/*
+ * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
+ * or more contributor license agreements. Licensed under the Elastic License
+ * 2.0; you may not use this file except in compliance with the Elastic License
+ * 2.0.
+ */
+
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
+import useObservable from 'react-use/lib/useObservable';
+import { BehaviorSubject } from 'rxjs';
+
+import { useCurrentUser } from '@kbn/core-user-profile-browser-hooks';
+import { I18nProvider } from '@kbn/i18n-react';
+
+import { SecurityNavControl } from './nav_control_component';
+
+jest.mock('@kbn/core-user-profile-browser-hooks', () => {
+  const actual = jest.requireActual('@kbn/core-user-profile-browser-hooks');
+  return { ...actual, useCurrentUser: jest.fn() };
+});
+jest.mock('react-use/lib/useObservable');
+
+const useObservableMock = useObservable as jest.Mock;
+const useCurrentUserMock = useCurrentUser as jest.Mock;
+
+const userMenuLinks$ = new BehaviorSubject([]);
+
+const renderWithIntl = (ui: React.ReactElement) => render(<I18nProvider>{ui}</I18nProvider>);
+
+describe('SecurityNavControl', () => {
+  beforeEach(() => {
+    useCurrentUserMock.mockReset();
+    useCurrentUserMock.mockReturnValue({
+      isLoading: false,
+      user: {
+        username: 'user',
+        email: 'email',
+        fullName: 'full name',
+        displayName: 'full name',
+        isAnonymous: false,
+        avatar: undefined,
+      },
+    });
+
+    useObservableMock.mockReset();
+    useObservableMock.mockImplementation(
+      (observable: BehaviorSubject<any>, initialValue = {}) => observable.value ?? initialValue
+    );
+  });
+
+  it('should render an avatar when user profile has loaded', async () => {
+    renderWithIntl(
+      <SecurityNavControl
+        editProfileUrl=""
+        logoutUrl=""
+        userMenuLinks$={userMenuLinks$}
+        buildFlavour="traditional"
+      />
+    );
+
+    expect(useCurrentUserMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('userMenuButton')).toMatchInlineSnapshot(`
+      <button
+        aria-controls="headerUserMenu"
+        aria-expanded="false"
+        aria-haspopup="true"
+        aria-label="Account menu"
+        class="euiButtonEmpty euiHeaderSectionItemButton emotion-euiButtonDisplay-euiButtonEmpty-m-empty-text-euiHeaderSectionItemButton"
+        data-test-subj="userMenuButton"
+        style="line-height: normal;"
+        type="button"
+      >
+        <span
+          class="euiButtonEmpty__content emotion-euiButtonDisplayContent"
+        >
+          <span
+            class="eui-textTruncate euiButtonEmpty__text"
+          >
+            <span
+              class="euiHeaderSectionItemButton__content emotion-euiHeaderSectionItemButton__content"
+            >
+              <div
+                aria-label="full name (email)"
+                class="euiAvatar euiAvatar--s euiAvatar--user emotion-euiAvatar-user-s-uppercase"
+                data-test-subj="userMenuAvatar"
+                role="img"
+                style="background-color: rgb(211, 96, 134); color: rgb(0, 0, 0);"
+                title="full name (email)"
+              >
+                <span
+                  aria-hidden="true"
+                >
+                  fn
+                </span>
+              </div>
+            </span>
+          </span>
+        </span>
+      </button>
+    `);
+  });
+
+  it('should render a spinner while loading', () => {
+    useCurrentUserMock.mockReturnValue({
+      isLoading: true,
+      user: null,
+    });
+
+    renderWithIntl(
+      <SecurityNavControl
+        editProfileUrl=""
+        buildFlavour="traditional"
+        logoutUrl=""
+        userMenuLinks$={userMenuLinks$}
+      />
+    );
+
+    expect(useCurrentUserMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('userMenuButton')).toMatchInlineSnapshot(`
+      <button
+        aria-controls="headerUserMenu"
+        aria-expanded="false"
+        aria-haspopup="true"
+        aria-label="Account menu"
+        class="euiButtonEmpty euiHeaderSectionItemButton emotion-euiButtonDisplay-euiButtonEmpty-m-empty-text-euiHeaderSectionItemButton"
+        data-test-subj="userMenuButton"
+        style="line-height: normal;"
+        type="button"
+      >
+        <span
+          class="euiButtonEmpty__content emotion-euiButtonDisplayContent"
+        >
+          <span
+            class="eui-textTruncate euiButtonEmpty__text"
+          >
+            <span
+              class="euiHeaderSectionItemButton__content emotion-euiHeaderSectionItemButton__content"
+            >
+              <span
+                aria-label="Loading"
+                class="euiLoadingSpinner emotion-euiLoadingSpinner-m"
+                role="progressbar"
+              />
+            </span>
+          </span>
+        </span>
+      </button>
+    `);
+  });
+
+  it('should open popover when avatar is clicked', async () => {
+    renderWithIntl(
+      <SecurityNavControl
+        editProfileUrl=""
+        logoutUrl=""
+        userMenuLinks$={userMenuLinks$}
+        buildFlavour="traditional"
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('userMenuButton'));
+    await waitFor(() => {
+      expect(screen.getByTestId('logoutLink')).toBeInTheDocument();
+    });
+  });
+
+  it('should not open popover while loading', () => {
+    useCurrentUserMock.mockReturnValue({
+      isLoading: true,
+      user: null,
+    });
+
+    renderWithIntl(
+      <SecurityNavControl
+        editProfileUrl=""
+        logoutUrl=""
+        userMenuLinks$={userMenuLinks$}
+        buildFlavour="traditional"
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('userMenuButton'));
+    expect(screen.queryByTestId('logoutLink')).not.toBeInTheDocument();
+  });
+
+  it('should render additional user menu links registered by other plugins and should render the default Edit Profile link as the first link when no custom profile link is provided', async () => {
+    const DummyComponent = <div>Dummy Component</div>;
+
+    renderWithIntl(
+      <SecurityNavControl
+        editProfileUrl="edit-profile-link"
+        logoutUrl=""
+        userMenuLinks$={
+          new BehaviorSubject([
+            { label: 'link1', href: 'path-to-link-1', iconType: 'empty', order: 1 },
+            { label: 'link2', href: 'path-to-link-2', iconType: 'empty', order: 2 },
+            { label: 'link3', href: 'path-to-link-3', iconType: 'empty', order: 3 },
+            {
+              label: 'dummyComponent',
+              href: '',
+              iconType: 'empty',
+              order: 4,
+              content: DummyComponent,
+            },
+          ])
+        }
+        buildFlavour="traditional"
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('userMenuButton'));
+
+    expect(screen.getByTestId('userMenu')).toMatchInlineSnapshot(`
+      <div
+        class="euiContextMenu chrNavControl__userMenu emotion-euiContextMenu"
+        data-test-subj="userMenu"
+        style="height: 0px;"
+      >
+        <div
+          class="euiContextMenuPanel emotion-euiContextMenuPanel-euiContextMenu__panel"
+          tabindex="-1"
+        >
+          <div
+            class="euiContextMenuItem euiContextMenuPanel__title emotion-euiContextMenuItem-m-center-euiContextMenuPanel__title"
+            data-test-subj="contextMenuPanelTitle"
+          >
+            <span
+              class="euiContextMenuItem__text emotion-euiContextMenuItem__text"
+            >
+              full name
+            </span>
+          </div>
+          <div>
+            <div
+              class="euiContextMenuPanel emotion-euiContextMenuPanel"
+              tabindex="-1"
+            >
+              <div>
+                <a
+                  class="euiContextMenuItem emotion-euiContextMenuItem-s-center"
+                  data-test-subj="profileLink"
+                  href="edit-profile-link"
+                  rel="noreferrer"
+                >
+                  <span
+                    class="emotion-euiContextMenu__icon"
+                    data-euiicon-type="user"
+                  />
+                  <span
+                    class="euiContextMenuItem__text emotion-euiContextMenuItem__text-s"
+                  >
+                    Edit profile
+                  </span>
+                </a>
+                <a
+                  class="euiContextMenuItem emotion-euiContextMenuItem-s-center"
+                  data-test-subj="userMenuLink__link1"
+                  href="path-to-link-1"
+                  rel="noreferrer"
+                >
+                  <span
+                    class="emotion-euiContextMenu__icon"
+                    data-euiicon-type="empty"
+                  />
+                  <span
+                    class="euiContextMenuItem__text emotion-euiContextMenuItem__text-s"
+                  >
+                    link1
+                  </span>
+                </a>
+                <a
+                  class="euiContextMenuItem emotion-euiContextMenuItem-s-center"
+                  data-test-subj="userMenuLink__link2"
+                  href="path-to-link-2"
+                  rel="noreferrer"
+                >
+                  <span
+                    class="emotion-euiContextMenu__icon"
+                    data-euiicon-type="empty"
+                  />
+                  <span
+                    class="euiContextMenuItem__text emotion-euiContextMenuItem__text-s"
+                  >
+                    link2
+                  </span>
+                </a>
+                <a
+                  class="euiContextMenuItem emotion-euiContextMenuItem-s-center"
+                  data-test-subj="userMenuLink__link3"
+                  href="path-to-link-3"
+                  rel="noreferrer"
+                >
+                  <span
+                    class="emotion-euiContextMenu__icon"
+                    data-euiicon-type="empty"
+                  />
+                  <span
+                    class="euiContextMenuItem__text emotion-euiContextMenuItem__text-s"
+                  >
+                    link3
+                  </span>
+                </a>
+                <div>
+                  Dummy Component
+                </div>
+                <div
+                  class="euiContextMenuItem emotion-euiContextMenuItem-s-center"
+                  data-test-subj="logoutLink"
+                >
+                  <span
+                    class="emotion-euiContextMenu__icon"
+                    data-euiicon-type="exit"
+                  />
+                  <span
+                    class="euiContextMenuItem__text emotion-euiContextMenuItem__text-s"
+                  >
+                    Log out
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `);
+  });
+
+  it('should render custom profile link registered by other plugins and not render default Edit Profile link', async () => {
+    renderWithIntl(
+      <SecurityNavControl
+        editProfileUrl="edit-profile-link"
+        logoutUrl=""
+        userMenuLinks$={
+          new BehaviorSubject([
+            { label: 'link1', href: 'path-to-link-1', iconType: 'empty', order: 1 },
+            { label: 'link2', href: 'path-to-link-2', iconType: 'empty', order: 2 },
+            {
+              label: 'link3',
+              href: 'path-to-link-3',
+              iconType: 'empty',
+              order: 3,
+              setAsProfile: true,
+            },
+          ])
+        }
+        buildFlavour="traditional"
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('userMenuButton'));
+
+    expect(screen.getByTestId('userMenu')).toMatchInlineSnapshot(`
+      <div
+        class="euiContextMenu chrNavControl__userMenu emotion-euiContextMenu"
+        data-test-subj="userMenu"
+        style="height: 0px;"
+      >
+        <div
+          class="euiContextMenuPanel emotion-euiContextMenuPanel-euiContextMenu__panel"
+          tabindex="-1"
+        >
+          <div
+            class="euiContextMenuItem euiContextMenuPanel__title emotion-euiContextMenuItem-m-center-euiContextMenuPanel__title"
+            data-test-subj="contextMenuPanelTitle"
+          >
+            <span
+              class="euiContextMenuItem__text emotion-euiContextMenuItem__text"
+            >
+              full name
+            </span>
+          </div>
+          <div>
+            <div
+              class="euiContextMenuPanel emotion-euiContextMenuPanel"
+              tabindex="-1"
+            >
+              <div>
+                <a
+                  class="euiContextMenuItem emotion-euiContextMenuItem-s-center"
+                  data-test-subj="userMenuLink__link1"
+                  href="path-to-link-1"
+                  rel="noreferrer"
+                >
+                  <span
+                    class="emotion-euiContextMenu__icon"
+                    data-euiicon-type="empty"
+                  />
+                  <span
+                    class="euiContextMenuItem__text emotion-euiContextMenuItem__text-s"
+                  >
+                    link1
+                  </span>
+                </a>
+                <a
+                  class="euiContextMenuItem emotion-euiContextMenuItem-s-center"
+                  data-test-subj="userMenuLink__link2"
+                  href="path-to-link-2"
+                  rel="noreferrer"
+                >
+                  <span
+                    class="emotion-euiContextMenu__icon"
+                    data-euiicon-type="empty"
+                  />
+                  <span
+                    class="euiContextMenuItem__text emotion-euiContextMenuItem__text-s"
+                  >
+                    link2
+                  </span>
+                </a>
+                <a
+                  class="euiContextMenuItem emotion-euiContextMenuItem-s-center"
+                  data-test-subj="userMenuLink__link3"
+                  href="path-to-link-3"
+                  rel="noreferrer"
+                >
+                  <span
+                    class="emotion-euiContextMenu__icon"
+                    data-euiicon-type="empty"
+                  />
+                  <span
+                    class="euiContextMenuItem__text emotion-euiContextMenuItem__text-s"
+                  >
+                    link3
+                  </span>
+                </a>
+                <div
+                  class="euiContextMenuItem emotion-euiContextMenuItem-s-center"
+                  data-test-subj="logoutLink"
+                >
+                  <span
+                    class="emotion-euiContextMenu__icon"
+                    data-euiicon-type="exit"
+                  />
+                  <span
+                    class="euiContextMenuItem__text emotion-euiContextMenuItem__text-s"
+                  >
+                    Log out
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `);
+  });
+
+  it('should render anonymous user', async () => {
+    useCurrentUserMock.mockReturnValue({
+      isLoading: false,
+      user: {
+        username: 'user',
+        fullName: 'full name',
+        displayName: 'full name',
+        isAnonymous: true,
+        avatar: undefined,
+      },
+    });
+
+    renderWithIntl(
+      <SecurityNavControl
+        editProfileUrl=""
+        logoutUrl=""
+        userMenuLinks$={userMenuLinks$}
+        buildFlavour="traditional"
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('userMenuButton'));
+
+    expect(screen.getByTestId('userMenu')).toMatchInlineSnapshot(`
+      <div
+        class="euiContextMenu chrNavControl__userMenu emotion-euiContextMenu"
+        data-test-subj="userMenu"
+        style="height: 0px;"
+      >
+        <div
+          class="euiContextMenuPanel emotion-euiContextMenuPanel-euiContextMenu__panel"
+          tabindex="-1"
+        >
+          <div
+            class="euiContextMenuItem euiContextMenuPanel__title emotion-euiContextMenuItem-m-center-euiContextMenuPanel__title"
+            data-test-subj="contextMenuPanelTitle"
+          >
+            <span
+              class="euiContextMenuItem__text emotion-euiContextMenuItem__text"
+            >
+              full name
+            </span>
+          </div>
+          <div>
+            <div
+              class="euiContextMenuPanel emotion-euiContextMenuPanel"
+              tabindex="-1"
+            >
+              <div>
+                <div
+                  class="euiContextMenuItem emotion-euiContextMenuItem-s-center"
+                  data-test-subj="logoutLink"
+                >
+                  <span
+                    class="emotion-euiContextMenu__icon"
+                    data-euiicon-type="exit"
+                  />
+                  <span
+                    class="euiContextMenuItem__text emotion-euiContextMenuItem__text-s"
+                  >
+                    Log in
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `);
+  });
+});

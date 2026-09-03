@@ -10,23 +10,10 @@ With *Lens*, you can:
 
 * Create area, line, and bar charts with layers to display multiple indices and chart types.
 * Change the aggregation function to change the data in the visualization.
+* Create custom tables.
 * Perform math on aggregations using *Formula*.
 * Use time shifts to compare the data in two time intervals, such as month over month.
-* Create custom tables.
-
-++++
-<script type="text/javascript" async 
-src="https://play.vidyard.com/embed/v4.js"></script>
-<img
-style="width: 100%; margin: auto; display: block;"
-class="vidyard-player-embed"
-src="https://play.vidyard.com/vVJ69WCgUwGNJSDqjPZbaV.jpg"
-data-uuid="vVJ69WCgUwGNJSDqjPZbaV"
-data-v="4"
-data-type="inline"
-/>
-</br>
-++++
+* Add annotations and reference lines.
 
 [float]
 [[create-the-visualization-panel]]
@@ -34,11 +21,11 @@ data-type="inline"
 
 If you're unsure about the visualization type you want to use, or how you want to display the data, drag the fields you want to visualize onto the workspace, then let *Lens* choose for you. 
 
-If you already know the visualization type you want to use, and how you want to display the data, use the following process:
+If you already know the visualization type you want to use, and how you want to display the data, use the following process.
 
 Choose the visualization type. 
 
-. Before you drag fields to the workspace, open the *Chart type* dropdown, then select the visualization type.  
+. Before you drag fields to the workspace, open the *Visualization type* dropdown, then select the visualization you want to use.  
 
 . To view more visualizations that *Lens* automatically created for the fields, click *Suggestions*. If one of the *Suggestions* meets your visualization needs, click *Save and return* to add it to the dashboard.
 
@@ -48,28 +35,42 @@ Choose the data you want to visualize.
 
 . If you want to learn more about the data a field contains, click the field.
 
+. To visualize more than one {data-source}, click *Add layer*, select the layer type, then select the {data-source}.
+
 Edit and delete.
 
-. To change the aggregation *Quick function* and display options, click the field in the layer pane. 
+. Hover over the panel and click image:dashboard/images/edit-visualization-icon.png[Edit visualization icon, width=3%] to edit the visualization. The *Edit visualization* flyout appears.
 
-. To delete a field, close the configuration options, then click *X* next to the field.
+. To change the aggregation *Quick function*, click the field in the flyout. 
+
+. To delete a field, click image:dashboard/images/trash_can.png[Actions menu icon to delete a field, width=5%] next to the field.
+
+. To duplicate a layer, click image:dashboard/images/vertical-actions-menu.png[Actions menu to duplicate Lens visualization layers] in the flyout, then select *Duplicate layer*.
+
+. To clear the layer configuration, click image:dashboard/images/vertical-actions-menu.png[Actions menu to clear Lens visualization layers] in the flyout, then select *Clear layer*.
+
+. Click **Apply and close**. 
+
+TIP: Use the **Edit visualization** flyout to make edits without having to leave the dashboard, or click **Edit in Lens** in the flyout to make edits using the Lens application.
 
 [float]
 [[change-the-fields]]
 ==== Change the fields list
 
-Change the fields list to display a different index pattern, different time range, or add your own fields.
+Change the fields list to display a different {data-source}, different time range, or add your own fields.
 
-* To create a visualization with fields in a different index pattern, open the *Change index pattern* dropdown, then select the index pattern. 
+* To create a visualization with fields in a different {data-source}, open the {data-source} dropdown, then select the {data-source}. 
++
+For more information about {data-sources}, refer to <<data-views>>.
 
 * If the fields list is empty, change the <<set-time-filter,time filter>>.
 
-* To add fields, open the action menu (*...*) next to the *Change index pattern* dropdown, then select *Add field to index pattern*.
+* To add fields, open the {data-source} dropdown, then select *Add a field to this {data-source}*.
 +
 [role="screenshot"]
-image:images/runtime-field-menu.png[Dropdown menu located next to index pattern field with items for adding and managing fields, width=50%]
+image:images/lens_dataViewDropDown_8.4.0.png[Dropdown menu located next to {data-source} field with items for adding and managing fields]
 +
-For more information about adding fields to index patterns and examples, refer to <<runtime-fields>>.
+For more information about adding fields to {data-sources} and examples, refer to <<runtime-fields>>.
 
 [float]
 [[create-custom-tables]]
@@ -77,7 +78,7 @@ For more information about adding fields to index patterns and examples, refer t
 
 Tables are highly customizable, and provide you with text alignment, value formatting, coloring options, and more.
 
-. From the *Chart type* dropdown, select *Table*. 
+. From the *Visualization type* dropdown, select *Table*. 
 
 . Drag the fields you want to visualize to the workspace. 
 
@@ -85,28 +86,156 @@ Tables are highly customizable, and provide you with text alignment, value forma
 +
 All columns that belong to the same layer pane group are sorted in the table.
 
-. To change the display options, click a *Metrics* field, then configure the following options:
+. To change the display options, click a *Metrics* field in the layer pane, then configure the following options:
 
-* *Display name* &mdash; Specifies the field display name. 
+* *Name* &mdash; Specifies the field display name. 
+
+* *Collapse by* &mdash; Aggregates all metric values with the same value into a single number.
 
 * *Value format* &mdash; Specifies how the field value displays in the table. 
 
 * *Text alignment* &mdash; Aligns the values in the cell to the *Left*, *Center*, or *Right*.
 
+* *Color by value* &mdash; Applies color to the cell or text values. To change the color, click the *Edit colors* icon. 
+
 * *Hide column* &mdash; Hides the column for the field.
+
+* *Directly filter on click* &mdash; Turns column values into clickable links that allow you to filter or drill down into the data.
 
 * *Summary row* &mdash; Adds a row that displays the summary value. When specified, allows you to enter a *Summary label*.
 
-* *Color by value* &mdash; Applies color to the cell or text values. To change the color, click *Edit*. 
+[float]
+[[assign-colors-to-terms]]
+==== Assign colors to terms
+
+You can assign specific colors to terms in your visualizations. This color mapping can be useful in several situations:
+
+* **Visual recognition and recall**: Keep colors consistent for each term regardless of filters or sorting.
+* **Semantic meaning**: Use colors to convey meaning or categorization.
+* **Consistency**: Align with brand colors and improve overall aesthetic consistency.
+
+image::images/color_mapping.png[A bar chart with terms mapped to specific colors]
+
+[float]
+===== Supported visualization types
+
+Color mapping is available for the following **Lens** visualization types:
+
+* **Data tables**: Assign colors to terms in **Rows** or **Metrics** fields. You can apply colors to cell backgrounds or text.
+* **XY charts (Area, Bar, Line)**: Assign colors to breakdown dimensions that split your data into multiple series.
+* **Partition charts (Donut, Pie, Treemap, Waffle)**: Assign colors to the main slice or group-by dimension that defines the chart segments.
+* **Tag clouds**: Assign colors to the tags dimension that determines the terms displayed in the cloud.
+
+[float]
+===== Configure color mapping in a chart
+
+To assign colors to terms in your visualization:
+
+1. Create a visualization using one of the supported types.
+2. Add a categorical field that contains the terms you want to color.
+3. In the field configuration, look for the **Color by value** option:
+   ** For data tables: Select **Cell** or **Text**
+   ** For other chart types: This option appears when you have a categorical breakdown
+4. Click the **Edit colors** icon. In the menu that opens, keep **Use legacy palettes** turned off to be able to assign colors to specific terms
+5. Select a color palette from the available options:
+   ** **Elastic**: The default and most recent palette. It is intentionally built from a color spectrum designed for flexibility and consistency, while being suited for future accessibility improvements.
+   ** **Kibana 7.0**: A palette that matches the Kibana 7.0 color theme for visualizations
+   ** **Kibana 4.0**: A palette that matches the Kibana 4.0 color theme for visualizations
+   ** **Elastic classic**: A palette made of classic Elastic brand colors
+6. Select the color mode you'd like to use with this palette:
+   ** **Categorical**: Assign a distinct color to each term
+   ** **Gradient**: Assign gradients of the same color to each term
+7. Choose which terms to color. You can assign colors manually or select **Add all unassigned terms** for automatic assignment. +
++
+TIP: You can assign several terms to the same color.
+8. Choose how to handle unassigned terms: Use the selected color palette or assign a single color.
+
+[float]
+===== Color options and accessibility
+
+**Discrete colors and gradients**
+
+Choose from discrete color sets or generate sequential or divergent gradients. Gradients work well for Likert scales and other term scales.
+
+**Theme-aware neutral colors**
+
+Use neutral gray colors that adjust automatically between light and dark themes. These help de-emphasize less important data.
+
+**Accessibility warnings**
+
+The system warns you when colors don't have enough contrast for accessibility.
+
+[float]
+===== Best practices
+
+**Maintain consistency**
+
+Use color mapping to create consistent color schemes when the same categorical data appears across multiple visualizations in your dashboards.
+
+**Use semantic colors**
+
+Leverage color associations that users already understand (such as red for errors, green for success) to make your visualizations more intuitive.
+
+**Consider performance**
+
+Color mapping works best with fields that have a reasonable number of distinct values. Fields with hundreds or thousands of unique terms may impact visualization performance.
+
+**Plan for themes**
+When choosing colors, consider how they will appear in both light and dark themes. Use theme-aware neutral colors when you want to de-emphasize data.
+
+[float]
+[[metric-trends]]
+==== Show trends in Metric charts
+
+When creating **Metric** visualizations with numeric data, you can add trend indicators that compare your primary metric to a secondary value. This feature displays colored badges with directional arrows to help you quickly identify whether values are increasing, decreasing, or staying the same.
+
+Example of a metric with a secondary metric that's **not** using trend indicators:
+
+image::images/secondary_metric_before_compare.png["Secondary metric before comparison", width=30%]
+
+The same metric, now using a trend indicator for its secondary metric:
+
+image::images/secondary_metric_after_compare.png["Secondary metric after comparison", width=30%]
+
+To add trend indicators to your metric visualization:
+
+1. Create a **Metric** visualization with a numeric primary metric.
+2. Add a secondary metric that represents the comparison value. +
++
+TIP: Use the `shift` parameter in formulas to compare current values against historical data. For example, if your primary metric is counting orders (based on an `order_id` field) for the current week, you can use the `count(order_id, shift='1w')` formula to compare this week's count of orders to last week's count.
+
+3. In the secondary metric configuration, look for the **Color by value** option. The possible choices are:
+   * **None** — No trend indicators (default)
+   * **Static** — Shows the secondary metric as a badge with a single color that you select
+   * **Dynamic** — Enables both color coding and directional icons based on the comparison
+
+4. Select **Dynamic** coloring. More options appear.
+
+5. Choose a **Color palette** that matches how you'd like to represent the comparison.
+
+6. Configure the **Display** option:
+   * **Icon** — Shows only directional arrows: ↑ for increase, ↓ for decrease, = for no change
+   * **Value** — Shows only the secondary metric value
+   * **Both** — Shows both the icon and value (default)
+
+7. The secondary metric does not automatically compare with the primary metric. Define the value to **Compare to**:
+   ** **Static value** — Compares against a fixed baseline value that you specify
+   ** **Primary metric** — Compares the secondary metric directly against the primary metric. This option is only available when the primary metric is numeric. +
+   When you select this option, the secondary metric is automatically updated:
+
+       *** The secondary metric label changes to **Difference**. You can change this by editing the **Prefix** option of the metric.
+       *** If you chose a **Display** option that shows a value, the secondary metric value is automatically updated to show the difference compared to the primary metric.
+
+8. Apply your changes. 
+
+The metric visualization is updated and now shows the secondary metric as a comparison with a trend indicator.
+
 
 [float]
 [[drag-and-drop-keyboard-navigation]]
 ==== Create visualizations with keyboard navigation
 
 To use a keyboard instead of a mouse, use the *Lens* fully accessible and continuously improved drag system.
-
-[role="screenshot"]
-image::images/lens_drag_drop_1.gif[Presented Lens drag and drop]
 
 . Select the field in the fields list or layer pane. Most fields have an inner and outer select state. The inner state opens a panel with detailed information or options. 
 The outer state allows you to drag the field. Tab through the fields until you get the outer state on the field.
@@ -166,21 +295,148 @@ TIP: For detailed information on formulas, click image:dashboard/images/formula_
 [[compare-data-with-time-offsets]]
 ==== Compare differences over time
 
-Compare your real-time data set to the results that are offset by a time increment. For example, you can compare the real-time percentage of a user CPU time spent to the results offset by one hour. 
+Compare your real-time data to the results that are offset by a time increment. For example, you can compare the real-time percentage of a user CPU time spent to the results offset by one hour. 
 
 . In the layer pane, click the field you want to offset.
 
-. From the *Add advanced options* dropdown, select *Time shift*.
+. Click *Advanced*.
 
-. Select the time offset increment. 
+. In the *Time shift* field, enter the time offset increment. 
 
 For a time shift example, refer to <<compare-time-ranges>>.
+
+[float]
+[[create-partition-charts-with-multiple-metrics]]
+==== Create partition charts with multiple metrics
+
+To create partition charts, such as pie charts, configure one or more *Slice by* dimensions to define the partitions, and a *Metric* dimension to define the size. 
+To create partition charts with multiple metrics, use the layer settings. Multiple metrics are unsupported for mosaic visualizations.
+
+. In the layer pane, click image:dashboard/images/lens_layerActions_8.5.0.png[Actions menu for the partition visualization layer], then select *Layer settings*.
+
+. Select *Multiple metrics*.
+
+. Click *X*.
+
+[float]
+[[improve-visualization-loading-time]]
+==== Improve visualization loading time
+
+preview::[]
+
+Data sampling allows you to improve the visualization loading time. To decrease the loading time, use a lower sampling percentage, which also decreases the accuracy. 
+Use low sampling percentages on large datasets.
+
+. In the **Edit visualization** flyout, click image:dashboard/images/lens_layerActions_8.5.0.png[Actions menu for the partition visualization layer], then select *Layer settings*.
+
+. To select the *Sampling* percentage, use the slider.
+
+. Click *Apply and close*.
+
+. Click **Save**.
+
+[float]
+[[add-annotations]]
+==== Add annotations
+
+preview::[]
+
+Annotations allow you to call out specific points in your visualizations that are important, such as significant changes in the data. You can add annotations for any {data-source}, add text and icons, specify the line format and color, and more.
+
+[role="screenshot"]
+image::images/lens_annotations_8.2.0.png[Lens annotations]
+
+Annotations support two placement types:
+
+* *Static date* &mdash; Displays annotations for specific times or time ranges.
+
+* *Custom query* &mdash; Displays annotations based on custom {es} queries. For detailed information about queries, check <<semi-structured-search>>. 
+
+Any annotation layer can be saved as an annotation group to the *Visualize Library* in order to reuse it in other visualizations. Any changes made to the annotation group will be reflected in all visualizations to which it is added.
+
+Create a new annotation layer. 
+
+. In the layer pane, click *Add layer > Annotations > New annotation*.
+
+. Select the {data-source} for the annotation.
+
+. From the fields list, drag a field to the *Add an annotation* field.
+
+. To use global filters in the annotation, click image:dashboard/images/lens_layerActions_8.5.0.png[Actions menu for the annotations layer], then select *Keep global filters* from the dropdown.
++
+When you add the visualization to dashboards, image:dashboard/images/lens_visualizationModifierPopup_8.8.0.png[Visualization modifier popup] appears, 
+which allows you to view settings changes to the visualization.
+
+Create static annotations.
+
+. Select *Static date*.
+
+. In the *Annotation date* field, click image:images/lens_annotationDateIcon_8.6.0.png[Annodation date icon in Lens], then select the date.
+
+. To display the annotation as a time range, select *Apply as range*, then specify the *From* and *To* dates.
+
+Create custom query annotations.
+
+. Select *Custom query*.
+
+. Enter the *Annotation query* for the data you want to display. 
++
+For detailed information about queries and examples, check <<semi-structured-search>>.
+
+. Select the *Target date field*.
+
+Specify the annotation appearance.
+
+. Enter the annotation *Name*.
+
+. Change the *Appearance* options for how you want the annotation to display on the visualization.
+
+. If you created a custom query annotation, click *Add field* to add a field to the annotation tooltip.
+
+. To close, click *X*.
+
+Save the annotation group to the library. 
+
+. In the layer pane, on your annotation layer, click image:images/lens_saveAnnotationLayerButton_8.9.0.png[Save button on annotations layer].
+
+. Enter the *Title*, *Description*, and add any applicable <<managing-tags,*Tags*>>.
+
+. Click *Save group*.
+
+Add a library annotation group to a visualization.
+
+. In the layer pane, click *Add layer > Annotations > Load from library*.
+
+. Select the annotation group you want to use.
+
+[float]
+[[add-reference-lines]]
+==== Add reference lines
+
+With reference lines, you can identify specific values in your visualizations with icons, colors, and other display options. You can add reference lines to any visualization type that displays axes.
+
+For example, to track the number of bytes in the 75th percentile, add a shaded *Percentile* reference line to your time series visualization.  
+
+[role="screenshot"]
+image::images/lens_referenceLine_7.16.png[Lens drag and drop focus state]
+
+. In the layer pane, click *Add layer > Reference lines*.
+
+. Click the reference line value, then specify the reference line you want to use:
+
+* To add a static reference line, click *Static*, then enter the reference line value you want to use.
+
+* To add a dynamic reference line, click *Quick functions*, then click and configure the functions you want to use.
+
+* To calculate the reference line value with math, click *Formula*, then enter the formula.
+
+. Specify the display options, such as *Display name* and *Icon*, then click *Close*.
 
 [float]
 [[filter-the-data]]
 ==== Apply filters
 
-You can use the <<semi-structured-search, KQL query bar>> to focus on a known set of data for the entire visualization, or use the filter options from the layer pane or legend.
+You can use the <<semi-structured-search, query bar>> to create queries that filter all the data in a visualization, or use the layer pane and legend filters to apply filters based on field values.
 
 [float]
 [[filter-with-the-function]]
@@ -222,23 +478,208 @@ In the legend, click the field, then choose one of the following options:
 
 [float]
 [[configure-the-visualization-components]]
-==== Configure the visualization components
+==== Customize the visualization display
 
-Each visualiztion type comes with a set of components that you access from the editor toolbar.
+Each visualization type comes with a set of components that you access from the editor toolbar.
 
 The following component menus are available:
 
-* *Visual options* &mdash; Specifies how to display area, line, and bar chart options. For example, you can specify how to display the labels in bar charts.
+* *Appearance* &mdash; Specifies how to display area, line, and bar chart options. For example, you can specify how to display the labels in bar charts.
 
 * *Labels* &mdash; Specifies how to display the labels for donut charts, pie charts, and treemaps. 
 
-* *Legend* &mdash; Specifies how to display the legend. For example, you can display the legend inside the visualization and truncate the legend values.
+* *Legend* &mdash; Specifies how to display the legend. You can choose to display the legend inside or outside the visualization, truncate the legend values when they're too long, and <<customize-visualization-legend,select additional statistics to show>>.
 
 * *Left axis*, *Bottom axis*, and *Right axis* &mdash; Specify how you want to display the chart axes. For example, add axis labels and change the orientation and bounds.
 
 [float]
+[[customize-visualization-appearance]]
+===== Visualization appearance options
+
+When creating or editing a visualization, you can customize several appearance options. To do that, look for the `brush` appearance icon.
+
+These options can vary depending on the type of chart.
+
+[float]
+====== Area, Bar, and Line charts
+
+**Area fill opacity**::
+For **Area** charts. Opacity of the area fill. Defaults to `0.3`.
+
+**Bar orientation**::
+For **Bar** charts. Choose between **Horizontal** and **Vertical**.
+
+**Line interpolation**::
+For **Line** charts. Choose how to interpolate the line between data points from the available options: **Straight** (default), **Smooth**, and **Step**.
+
+**Missing values**::
+For **Area** and **Line** charts. Choose between **Hide**, **Zero**, **Linear**, **Last**, and **Next**. This option controls how gaps in data appear on the chart. By default, gaps are hidden.
++
+_Missing values_ include empty buckets and metrics: Buckets without documents or metrics that returned `null` due to their operation and data content.
++
+NOTE: You can only use this option when the **Include empty rows** option of the chart is enabled or when a metric produces a null bucket. For example, if a moving average finds empty buckets.
++
+* **Hide**: Don't show gaps in data.
++
+image::images/charts-gaps-fill-hide.png["Hide missing values", width=50%]
++
+* **Zero**: Fill gaps by connecting starting and ending data points to zero.
++
+image::images/charts-gaps-fill-zero.png["Fill gaps to zero", width=50%]
++
+* **Linear**: Fill gaps by connecting related starting and ending data points together with a direct line.
++
+image::images/charts-gaps-fill-linear.png["Fill gaps with a direct line", width=50%]
++
+* **Last**: Fill gaps between data points with a horizontal or vertical line that uses the last ending point value, when available, to determine its position.
++
+image::images/charts-gaps-fill-last.png["Fill gaps with a straight line from last known data point", width=50%]
++
+* **Next**: Fill gaps between data points with a horizontal or vertical line that uses the next starting point value, when available, to determine its position.
++
+image::images/charts-gaps-fill-next.png["Fill gaps with a straight line from next known data point", width=50%]
+
+**End values**::
+If you've chosen to show missing values, you can also decide to extend data series to the edge of the chart. By default, end values are hidden.
++
+* **Hide**: Don't extend series to the edge of the chart.
+* **Zero**: Extend series as zero to the edge of the chart.
+* **Nearest**: Extend series with their first or last value to the edge of the chart.
+
+**Show as dotted line**::
+If you've chosen to show missing values, you can turn on this option to show gaps as a dotted line.
+
+**Point visibility**::
+For **Area** and **Line** charts. Use this option to show or hide data points. Set to `Auto` by default: Points are visible unless the distance between them is too short.
+
+[float]
+====== Tables
+
+**Density**::
+Make the table more or less compact. Choose between **Compact**, **Normal** (default), and **Expanded**.
+
+**Max header cell lines**::
+The maximum number of lines that header cells can span over. If the content exceeds this limit and is truncated, an ellipsis indicates it.
+
+**Body cell lines**::
+The fixed number of lines that body cells span over. If the content exceeds this limit and is truncated, an ellipsis indicates it.
+
+**Paginate table**::
+Turn on this option to paginate the table. Pagination shows when the table contains at least 10 items, and lets you define how many items to display per page. When turned off, you can scroll through all items.
+
+[float]
+====== Pie charts
+
+**Donut hole**::
+Display a **Small**, **Medium**, or **Large** hole at the center of the pie chart. Defaults to **None**.
+
+[float]
+====== Gauge charts
+
+**Gauge shape**::
+Define the shape of the gauge. Choose between **Linear**, **Minor arc**, **Major arc**, and **Circle**. When set to **Linear**, you can choose to display the chart horizontally or vertically.
+
+[float]
+====== Tag clouds
+
+**Font size**::
+Define the range of font sizes used in the tag cloud. The font size is based on the number of times a tag appears in the data.
+
+**Orientation**::
+Define the orientation of the tags. Choose **Single**, **Right angled**, and **Multiple**.
+
+**Show label**::
+Turn on this option to show a label for the tag cloud. You can define this label when defining the tags to show for the visualization, by customizing the **Name** field.
+
+[float]
+[[customize-visualization-legend]]
+===== Customize a visualization legend
+
+When creating or editing a visualization, you can customize the way the legend gets displayed, and the data it displays. To do that, look for the image:images/legend-icon.svg[Legend icon] icon.
+
+image::images/legend-popover-8.16.0.png[Menu with options to customize the legend of a visualization, width=50%]
+
+NOTE: The options available can vary based on the type of chart you're setting up. For example, showing additional statistics is only possible for time series charts.
+
+**Change the legend's display**
+
+With the **Visibility**, **Position**, and **Width** options, you can adjust the way the legend appears in or next to the visualization.
+
+**Truncate long labels**
+
+With the **Label truncation** option, you can keep your legend minimal in case of long labels that span over multiple lines.
+
+**Show additional statistics for time series charts**
+
+To make your legends as informative as possible, you can show some additional **Statistics** for charts with a timestamp on one of the axes, and add a **Series header**.
+
+**Bar**, **Line** and **Area** charts can show the following values:
+
+- **Average**: Average value considering all data points in the chart
+- **Median**: Median value considering all data points in the chart
+- **Minimum**: Minimum value considering all data points in the chart
+- **Maximum**: Maximum value considering all data points in the chart
+- **Range**: Difference between min and max values
+- **Last value**: Last value considering all data points in the chart
+- **Last non-null value:** Last non-null value
+- **First value**: First value considering all data points in the chart
+- **First non-null value**: First non-null value
+- **Difference**: Difference between first and last values
+- **Difference %**: % difference between first and last values
+- **Sum**: Sum of al values plotted in the chart
+- **Count**: number of data points plotted in the chart
+- **Distinct Count**: number of data points with different values plotted in the chart
+- **Variance**: Variance of all data points plotted in the chart
+- **Std Deviation**: Standard deviation of all data points plotted in the chart
+- **Current or last value**: The exact value of the current or last data point moused over
+
+
+//Not part of release
+//**Pie** charts can only show two static options:
+//- **Value**
+//- **Percentage**
+
+All statistics are computed based on the selected time range and the aggregated data points shown in the chart, rather than the original data coming from {es}. 
+
+For example, if the metric plotted in the chart is `Median(system.memory)` and the time range is *last 24 hours*, when you show the **Max** statistic in the Legend, the value that shows corresponds to the `Max[Median(system.memory)]` for the last 24 hours.
+
+image::images/statistics-in-legends.png[Additional statistics shown in the legend of a memory consumption bar chart]
+
+
+
+[float]
+[[explore-lens-data-in-discover]]
+==== Explore the data in Discover
+
+When your visualization includes one data view, you can open and explore the visualization data in *Discover*.
+
+To get started, click *Explore data in Discover* in the toolbar.
+
+For more information about exploring your data with *Discover*, check out <<discover,Discover>>.
+
+[float]
+[[view-data-and-requests]]
+==== View the visualization data and requests
+
+To view the data included in the visualization and the requests that collected the data, use the *Inspector*.
+
+. In the toolbar, click *Inspect*.
+
+. Open the *View* dropdown, then click *Data*.
+
+.. From the dropdown, select the table that contains the data you want to view.
+
+.. To download the data, click *Download CSV*, then select the format type.
+
+. Open the *View* dropdown, then click *Requests*.
+
+.. From the dropdown, select the requests you want to view.
+
+.. To view the requests in *Console*, click *Request*, then click *Open in Console*.
+
+[float]
 [[save-the-lens-panel]]
-===== Save and add the panel
+==== Save and add the panel
 
 Save the panel to the *Visualize Library* and add it to the dashboard, or add it to the dashboard without saving.
 
@@ -260,9 +701,9 @@ To save the panel to the dashboard:
 
 .. In the panel header, click *No Title*.
 
-.. On the *Customize panel* window, select *Show panel title*.
+.. On the *Panel settings* window, select *Show title*.
 
-.. Enter the *Panel title*, then click *Save*.
+.. Enter the *Title*, then click *Save*.
 
 [float]
 [[lens-faq]]
@@ -408,15 +849,31 @@ To configure the bounds, use the menus in the editor toolbar. Bar and area chart
 .*Is it possible to display icons in data tables?*
 [%collapsible]
 ====
-You can display icons with <<managing-index-patterns, field formatter>> in data tables.
+You can display icons with <<managing-data-views, field formatters>> in data tables.
+====
+
+[discrete]
+[[is-it-possible-to-inspect-the-elasticsearch-queries-in-Lens]]
+.*How do I inspect {es} queries in visualizations?*
+[%collapsible]
+====
+You can inspect the requests sent by the visualization to {es} using the Inspector. It can be accessed within the editor or in the dashboard.
+====
+
+[discrete]
+[[how-to-isolate-a-single-series-in-a-chart]]
+.*How do I isolate a single series in a chart?*
+[%collapsible]
+====
+For area, line, and bar charts, press Shift, then click the series in the legend. All other series are automatically deselected.
 ====
 
 [discrete]
 [[is-it-possible-to-use-saved-serches-in-lens]]
-.*How do I visualize saved searches?*
+.*How do I visualize saved Discover sessions?*
 [%collapsible]
 ====
-Visualizing saved searches in unsupported.
+Visualizing saved Discover sessions is unsupported.
 ====
 
 [discrete]
@@ -444,17 +901,30 @@ Specifying the color for a single data point, such as a single bar or line, is u
 ====
 
 [discrete]
-[[is-it-possible-to-inspect-the-elasticsearch-queries-in-Lens]]
-.*How do I inspect {es} queries in visualizations?*
+[[dynamic-metric-coloring]]
+.*How does dynamic coloring work for the metric visualization?*
 [%collapsible]
 ====
-You can inspect the requests sent by the visualization to {es} using the Inspector. It can be accessed within the editor or in the dashboard.
-====
+In the color palette editor, if you select *Value type: Number* the colors are applied based on the *Primary metric* value.
 
-[discrete]
-[[how-to-isolate-a-single-series-in-a-chart]]
-.*How do I isolate a single series in a chart?*
-[%collapsible]
-====
-For area, line, and bar charts, press Shift, then click the series in the legend. All other series are automatically unselected.
+The *Primary metric* refers to the large number displayed in each tile.
+
+[role="screenshot"]
+image:images/lens_primaryMetric.png[Illustration of where to find the primary metric in a metric visualization.]
+
+
+If you select *Value type: Percent*, the primary metric values are mapped to a range between 0 and 100 percent. The bounds of the range depend on your configuration.
+
+The logic is as follows. If there is a Breakdown dimension for multiple visualization tiles:
+
+* When there is a *Maximum dimension*, the range is from zero to the value of your *Maximum dimension*.
+
+* When there is no *Maximum dimension*, the range is from the smallest primary metric values to the greatest primary metric values.
+
+If there is no Breakdown dimension for a single visualization tile:
+
+* When there is a *Maximum dimension*, the range is from zero to the value of your *Maximum dimension*.
+
+* When there is no *Maximum dimension*, *Value type: Percent* cannot be selected because there's no way to determine a range.
+
 ====

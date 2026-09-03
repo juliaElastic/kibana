@@ -1,4 +1,4 @@
-[[url_templating-language]]
+[[url-templating-language]]
 === URL templating
 
 beta[]
@@ -46,7 +46,8 @@ a|Format dates. Supports relative dates expressions (for example,  "now-15d"). R
 Example:
 
 `{{date event.from “YYYY MM DD”}}` +
-`{{date “now-15”}}`
+`{{date “now-15d”}}` + 
+`{{date “now/d” roundUp=true}}`
 
 |formatNumber
 a|Format numbers. Numbers can be formatted to look like currency, percentages, times or numbers with decimal places, thousands, and abbreviations.
@@ -143,7 +144,7 @@ a|Escapes string using built in `encodeURIComponent` function, while keeping "@"
 
 
 [float]
-[[url-template-variables]]
+[[url-template-variable]]
 ==== URL template variables
 
 The URL drilldown template has three sources for variables:
@@ -202,7 +203,7 @@ Tip: Use in combination with <<helpers, date>> helper to format date.
 |
 | context.panel.indexPatternId +
 context.panel.indexPatternIds
-|Index pattern ids used by a panel.
+|The {data-source} IDs used by a panel.
 
 |
 | context.panel.savedObjectId
@@ -243,7 +244,7 @@ Note:
 
 |
 | event.values
-| An array of all cell values for the raw on which the action will execute.
+| An array of all cell values for the row on which the action will execute. To access a column value, use `{{event.values.[x]}}`, where `x` represents the column number.
 
 |
 | event.keys

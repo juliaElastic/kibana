@@ -7,7 +7,7 @@
 
 import * as React from 'react';
 import { render, unmountComponentAtNode } from 'react-dom';
-import { CoreSetup, AppMountParameters } from 'kibana/public';
+import { CoreSetup, AppMountParameters } from '@kbn/core/public';
 import { StartDependencies, UiActionsEnhancedExamplesStart } from './plugin';
 import { UiActionsExampleAppContextValue, context } from './context';
 
@@ -31,7 +31,7 @@ export const mount =
     };
     const reactElement = (
       <context.Provider value={deps}>
-        <App />
+        <App core={core} />
       </context.Provider>
     );
     render(reactElement, element);

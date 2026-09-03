@@ -1,17 +1,14 @@
 /*
  * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-import {
-  ToolingLog,
-  ToolingLogCollectingWriter,
-  createStripAnsiSerializer,
-  createRecursiveSerializer,
-} from '@kbn/dev-utils';
+import { ToolingLog, ToolingLogCollectingWriter } from '@kbn/tooling-log';
+import { createStripAnsiSerializer, createRecursiveSerializer } from '@kbn/jest-serializers';
 import { Config } from './config';
 import { createRunner } from './runner';
 import { Build } from './build';
@@ -49,7 +46,17 @@ const setup = async () => {
   const config = await Config.create({
     isRelease: true,
     targetAllPlatforms: true,
+    targetServerlessPlatforms: false,
     versionQualifier: '-SNAPSHOT',
+    dockerContextUseLocalArtifact: false,
+    dockerCrossCompile: false,
+    dockerNamespace: null,
+    dockerPush: false,
+    dockerTag: '',
+    dockerTagQualifier: '',
+    downloadFreshNode: true,
+    withExamplePlugins: false,
+    withTestPlugins: true,
   });
 
   const run = createRunner({
@@ -73,7 +80,7 @@ describe('default dist', () => {
     });
 
     expect(mock).toHaveBeenCalledTimes(1);
-    expect(mock).toHaveBeenLastCalledWith(config, log, [expect.any(Build)]);
+    expect(mock).toHaveBeenLastCalledWith(config, log);
   });
 
   it('calls local tasks once, passing the default build', async () => {

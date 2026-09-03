@@ -1,0 +1,33 @@
+{
+  "type": "plugin",
+  "id": "@kbn/observability-ai-assistant-management-plugin",
+  "owner": "@elastic/nightshift-context-and-research-team",
+  "group": "observability",
+  "visibility": "private",
+  "plugin": {
+    "id": "observabilityAiAssistantManagement",
+    "server": true,
+    "browser": true,
+    "configPath": [
+      "xpack",
+      "observabilityAiAssistantManagement"
+    ],
+    "requiredPlugins": [
+      "actions",
+      "management",
+      "observabilityAIAssistant",
+      "observabilityShared",
+      "ml",
+      "licensing"
+    ],
+    "optionalPlugins": [
+      "home",
+      "serverless",
+      "productDocBase"
+    ],
+    "requiredBundles": [
+      "kibanaReact",
+      "logsDataAccess"
+    ]
+  }
+}

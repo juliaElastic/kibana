@@ -1,14 +1,7 @@
 {
-  "name": "exploratory_view_example",
+  "name": "@kbn/exploratory-view-example-plugin",
   "version": "1.0.0",
-  "main": "target/examples/exploratory_view_example",
-  "kibana": {
-    "version": "kibana",
-    "templateVersion": "1.0.0"
-  },
+  "private": true,
   "license": "Elastic License 2.0",
-  "scripts": {
-    "kbn": "node ../../../scripts/kbn.js",
-    "build": "rm -rf './target' && ../../../node_modules/.bin/tsc"
-  }
+  "kbnGenerated": true
 }
