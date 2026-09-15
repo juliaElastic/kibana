@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Managed TBS UI Mock</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: #111827;
+        --panel-soft: #1f2937;
+        --text: #e5e7eb;
+        --muted: #94a3b8;
+        --accent: #22d3ee;
+        --ok: #34d399;
+        --warn: #f59e0b;
+        --danger: #fb7185;
+        --border: #334155;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background: linear-gradient(180deg, #020617 0%, var(--bg) 100%);
+        color: var(--text);
+      }
+
+      .container {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        font-weight: 600;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        margin-top: 6px;
+        font-size: 14px;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+      }
+
+      .tab {
+        border: 1px solid var(--border);
+        color: var(--muted);
+        background: var(--panel);
+        padding: 8px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+
+      .tab.active {
+        color: #001217;
+        background: var(--accent);
+        border-color: var(--accent);
+        font-weight: 600;
+      }
+
+      .view {
+        display: none;
+      }
+
+      .view.active {
+        display: block;
+      }
+
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .grid.cols-2 {
+        grid-template-columns: 1.2fr 0.8fr;
+      }
+
+      .grid.cols-4 {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px;
+      }
+
+      .panel h3 {
+        font-size: 15px;
+        margin-bottom: 10px;
+      }
+
+      .kpi {
+        font-size: 24px;
+        font-weight: 700;
+      }
+
+      .delta {
+        color: var(--ok);
+        font-size: 13px;
+      }
+
+      .row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .space-between {
+        justify-content: space-between;
+      }
+
+      label {
+        font-size: 12px;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        background: var(--panel-soft);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 13px;
+      }
+
+      textarea {
+        min-height: 120px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
+      }
+
+      .btn {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #0b1220;
+        color: var(--text);
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      .btn.primary {
+        background: #0e7490;
+        border-color: #0891b2;
+      }
+
+      .btn.warn {
+        background: #92400e;
+        border-color: #b45309;
+      }
+
+      .pill {
+        font-size: 12px;
+        border: 1px solid var(--border);
+        background: var(--panel-soft);
+        color: var(--muted);
+        border-radius: 999px;
+        padding: 4px 8px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      th,
+      td {
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+        padding: 8px 0;
+      }
+
+      th {
+        color: var(--muted);
+        font-weight: 500;
+      }
+
+      .bar {
+        width: 100%;
+        height: 10px;
+        border-radius: 999px;
+        background: #0b1220;
+        border: 1px solid var(--border);
+        overflow: hidden;
+      }
+
+      .bar > span {
+        display: block;
+        height: 100%;
+        background: linear-gradient(90deg, #0891b2, #22d3ee);
+      }
+
+      .line {
+        height: 120px;
+        border-radius: 10px;
+        border: 1px dashed var(--border);
+        background:
+          linear-gradient(180deg, rgba(34, 211, 238, 0.16), rgba(34, 211, 238, 0.02)),
+          repeating-linear-gradient(
+            0deg,
+            transparent 0,
+            transparent 18px,
+            rgba(148, 163, 184, 0.12) 19px,
+            rgba(148, 163, 184, 0.12) 20px
+          );
+        display: flex;
+        align-items: end;
+        justify-content: space-evenly;
+        padding: 10px;
+      }
+
+      .line > span {
+        width: 8px;
+        background: var(--accent);
+        border-radius: 999px;
+        opacity: 0.9;
+      }
+
+      .status-ok {
+        color: var(--ok);
+      }
+
+      .status-warn {
+        color: var(--warn);
+      }
+
+      .status-danger {
+        color: var(--danger);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="topbar">
+        <div>
+          <h1>Managed Tail Sampling</h1>
+          <div class="subtitle">Mock UI for policy management and sampling monitoring</div>
+        </div>
+        <div class="tabs">
+          <button class="tab active" data-target="policy">Policy Management</button>
+          <button class="tab" data-target="monitoring">Sampling Monitoring</button>
+        </div>
+      </div>
+
+      <section id="policy" class="view active">
+        <div class="grid cols-2">
+          <div class="panel">
+            <div class="row space-between" style="margin-bottom: 12px">
+              <h2>Project policies</h2>
+              <span class="pill">Revision: r-2026-09-15-18</span>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Policy</th>
+                  <th>Condition</th>
+                  <th>Sample rate</th>
+                  <th>Hit rate</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>errors-first</td>
+                  <td>status.code != OK</td>
+                  <td>100%</td>
+                  <td>8.1%</td>
+                  <td><button class="btn">Edit</button></td>
+                </tr>
+                <tr>
+                  <td>checkout-latency</td>
+                  <td>service=checkout AND p95 &gt; 500ms</td>
+                  <td>40%</td>
+                  <td>12.7%</td>
+                  <td><button class="btn">Edit</button></td>
+                </tr>
+                <tr>
+                  <td>default-random</td>
+                  <td>all remaining traces</td>
+                  <td>5%</td>
+                  <td>79.2%</td>
+                  <td><button class="btn">Edit</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <h2 style="margin-bottom: 12px">Create / edit policy</h2>
+            <div class="grid">
+              <div>
+                <label>Policy name</label>
+                <input value="checkout-latency" />
+              </div>
+              <div class="row">
+                <div style="flex: 1">
+                  <label>Match type</label>
+                  <select>
+                    <option>OTTL condition</option>
+                    <option>Latency threshold</option>
+                    <option>Error traces</option>
+                  </select>
+                </div>
+                <div style="width: 140px">
+                  <label>Sample rate</label>
+                  <input value="40%" />
+                </div>
+              </div>
+              <div>
+                <label>Condition expression</label>
+                <textarea>resource.attributes["service.name"] == "checkout" and trace.duration_ms > 500</textarea>
+              </div>
+              <div class="row">
+                <button class="btn">Validate only</button>
+                <button class="btn primary">Apply policy set</button>
+                <button class="btn warn">Discard draft</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid cols-2" style="margin-top: 16px">
+          <div class="panel">
+            <h3>Validation results</h3>
+            <ul>
+              <li class="status-ok">Syntax: valid OTTL expression.</li>
+              <li class="status-warn">Estimated memory impact: +11% at 30s decision window.</li>
+              <li class="status-warn">Estimated indexed volume impact: +7.4%.</li>
+            </ul>
+          </div>
+          <div class="panel">
+            <h3>Change review (full-set replace)</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Policy</th>
+                  <th>Detail</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="status-ok">Update</td>
+                  <td>checkout-latency</td>
+                  <td>sample_rate: 30% → 40%</td>
+                </tr>
+                <tr>
+                  <td class="status-danger">Delete</td>
+                  <td>legacy-rare-traces</td>
+                  <td>removed from draft policy set</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="monitoring" class="view">
+        <div class="grid cols-4">
+          <div class="panel">
+            <h3>Incoming volume</h3>
+            <div class="kpi">9.8B spans/day</div>
+            <div class="subtitle">27.4 TiB/day raw stream</div>
+          </div>
+          <div class="panel">
+            <h3>Kept volume</h3>
+            <div class="kpi">612M spans/day</div>
+            <div class="subtitle">6.2% keep rate</div>
+          </div>
+          <div class="panel">
+            <h3>Reduction</h3>
+            <div class="kpi">93.8%</div>
+            <div class="delta">+2.4% vs last 24h</div>
+          </div>
+          <div class="panel">
+            <h3>Sampler health</h3>
+            <div class="kpi status-warn">Degraded</div>
+            <div class="subtitle">2 pods near memory threshold</div>
+          </div>
+        </div>
+
+        <div class="grid cols-2" style="margin-top: 16px">
+          <div class="panel">
+            <h3>Volume in vs kept (24h)</h3>
+            <div class="line" aria-label="mock line chart">
+              <span style="height: 40%"></span>
+              <span style="height: 58%"></span>
+              <span style="height: 47%"></span>
+              <span style="height: 62%"></span>
+              <span style="height: 78%"></span>
+              <span style="height: 72%"></span>
+              <span style="height: 68%"></span>
+              <span style="height: 81%"></span>
+              <span style="height: 74%"></span>
+              <span style="height: 63%"></span>
+            </div>
+          </div>
+          <div class="panel">
+            <h3>Per-policy hit rates</h3>
+            <div style="margin-bottom: 10px">
+              <label>errors-first (8.1%)</label>
+              <div class="bar"><span style="width: 8.1%"></span></div>
+            </div>
+            <div style="margin-bottom: 10px">
+              <label>checkout-latency (12.7%)</label>
+              <div class="bar"><span style="width: 12.7%"></span></div>
+            </div>
+            <div style="margin-bottom: 10px">
+              <label>fraud-risk (2.4%)</label>
+              <div class="bar"><span style="width: 2.4%"></span></div>
+            </div>
+            <div>
+              <label>default-random (79.2%)</label>
+              <div class="bar"><span style="width: 79.2%"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid cols-2" style="margin-top: 16px">
+          <div class="panel">
+            <h3>What was kept and why</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Trace ID</th>
+                  <th>Decision</th>
+                  <th>Reason</th>
+                  <th>Policy</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>6be9...b431</td>
+                  <td class="status-ok">kept</td>
+                  <td>error status</td>
+                  <td>errors-first</td>
+                </tr>
+                <tr>
+                  <td>9ab1...112f</td>
+                  <td class="status-ok">kept</td>
+                  <td>latency threshold exceeded</td>
+                  <td>checkout-latency</td>
+                </tr>
+                <tr>
+                  <td>f91d...8cf4</td>
+                  <td>dropped</td>
+                  <td>no policy match; random not selected</td>
+                  <td>default-random</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="panel">
+            <h3>Sampler health details</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Pod</th>
+                  <th>Memory</th>
+                  <th>Decision lag</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>sampler-0</td>
+                  <td>71%</td>
+                  <td>1.4s</td>
+                  <td class="status-ok">healthy</td>
+                </tr>
+                <tr>
+                  <td>sampler-1</td>
+                  <td>89%</td>
+                  <td>5.8s</td>
+                  <td class="status-warn">degraded</td>
+                </tr>
+                <tr>
+                  <td>sampler-2</td>
+                  <td>93%</td>
+                  <td>8.1s</td>
+                  <td class="status-danger">critical</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const tabs = document.querySelectorAll(".tab");
+      const views = document.querySelectorAll(".view");
+
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          tabs.forEach((t) => t.classList.remove("active"));
+          views.forEach((v) => v.classList.remove("active"));
+          tab.classList.add("active");
+          document.getElementById(tab.dataset.target).classList.add("active");
+        });
+      });
+    </script>
+  </body>
+</html>
