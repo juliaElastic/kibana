@@ -245,33 +245,20 @@ describe('getOtlpExporterUpdate', () => {
 
   afterEach(() => jest.clearAllMocks());
 
-  it('keeps the stored settings that a partial update of the managed endpoint leaves out', () => {
-    const storedQueue = {
-      sizer: 'items',
-      queue_size: 100_000,
-      block_on_overflow: false,
-      batch: { sizer: 'items', min_size: 2000 },
-    };
+  it('fills the update of the managed endpoint with the recommended settings', () => {
     expect(
       getOtlpExporterUpdate({
-        update: update(MANAGED_HOST, { batch: { min_size: 3000 } }),
-        stored: stored(MANAGED_HOST, storedQueue),
+        update: update(MANAGED_HOST, { queue_size: null, batch: { min_size: 3000 } }),
+        stored: stored(MANAGED_HOST, { queue_size: 100_000 }),
         fromPreconfiguration: false,
       }).sending_queue
     ).toEqual({
       enabled: true,
-      sizer: 'items',
-      queue_size: 100_000,
-      block_on_overflow: false,
-      batch: { flush_timeout: '1s', sizer: 'items', min_size: 3000, max_size: 4_000_000 },
+      sizer: 'bytes',
+      queue_size: 50_000_000,
+      block_on_overflow: true,
+      batch: { flush_timeout: '1s', sizer: 'bytes', min_size: 3000, max_size: 4_000_000 },
     });
-    expect(
-      getOtlpExporterUpdate({
-        update: update(MANAGED_HOST),
-        stored: stored(MANAGED_HOST, storedQueue),
-        fromPreconfiguration: false,
-      }).sending_queue
-    ).toEqual(expect.objectContaining({ queue_size: 100_000, block_on_overflow: false }));
   });
 
   it('replaces the stored batch with an empty one, as the saved object update does', () => {
@@ -287,24 +274,6 @@ describe('getOtlpExporterUpdate', () => {
         fromPreconfiguration: false,
       })
     ).toThrow(OutputInvalidError);
-  });
-
-  it('removes the stored settings that the merged queue does not have', () => {
-    expect(
-      getOtlpExporterUpdate({
-        update: update(OTHER_HOST, { batch: {} }),
-        stored: stored(OTHER_HOST, {
-          sizer: 'items',
-          queue_size: 10_000,
-          batch: { sizer: 'items', min_size: 500 },
-        }),
-        fromPreconfiguration: false,
-      }).sending_queue
-    ).toEqual({
-      sizer: 'items',
-      queue_size: 10_000,
-      batch: { sizer: null, min_size: null },
-    });
   });
 
   it('checks the update merged into the stored queue', () => {
